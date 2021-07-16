@@ -10,16 +10,17 @@ plot(sorg$ER[ersub]~sorg$xlDateTime[ersub]);lines(sorg.er~sorg$xlDateTime, lwd=0
 
 #Precip/Sws sensitivity####
 titles<-c("January","February","March","April","May","June","July","August","September","October","November","December")
-for(i in c(6:10)){
+par(mfrow=c(2,2))
+for(i in c(7:10)){
 ersub<-which(!is.na(sorg$ER)&as.numeric(format(sorg$xlDateTime, "%m"))==i)
 monthlim<-range(as.numeric(sorg$xlDateTime[which(as.numeric(format(sorg$xlDateTime, "%m"))==i)]))
-par(mfrow=c(2,1))
 #plot(sorg$ER[ersub]~sorg$Ta[ersub], main=titles[i]) 
 #plot(sorg$ER[ersub]~sorg$Sws[ersub], main=titles[i])
-par(mfrow=c(1,1))
+#par(mfrow=c(1,1))
 plot(sorg$ER[ersub]~sorg$xlDateTime[ersub], main=titles[i], ylim=c(0,40), xlim=monthlim, ylab="ER (gm-2d-1)", xlab="date");lines(sorg.er~sorg$xlDateTime, lwd=0.5)
 lines(sorg$Precip~sorg$xlDateTime, col='blue', lwd=2);lines(sorg$Sws*100~sorg$xlDateTime, col='brown')
-legend(monthlim[1],40, legend=c("Sws (vwc*100)", "Precip"), col=c('brown', 'blue'), lwd=c(1,2),bty='n')
+legend(monthlim[1],40, legend=c("Sws (vwc*100)", "Precip", "ER (filled)"), col=c('brown', 'blue', 'black'), lwd=c(1,2, 0.5),bty='n')
+legend((monthlim[1]*1.001),40, legend=c("ER 'observations'"),pch=1,bty='n')
 }
 #####
 
@@ -92,23 +93,46 @@ sorgflux.e.thin<-umolCO2.to.gC(sorg.e.thin$ER_LT); sorgflux.w.thin<-umolCO2.to.g
 sorgroll.e<-rollapply(sorgflux.e.thin, width=48*14, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
 sorgroll.w<-rollapply(sorgflux.w.thin, width=48*14, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
 
+
+#ylim=c(-20, 10)
+title<-"ER (g m-2 d-1)"
+titlecum<-"Cumulative ER (g m-2)"
+ylim=c(0,25)
+
 par(mfrow=c(2,1), mar=c(2,4,1,1))
 gs<-which(format(sorg$xlDateTime, "%j")>0)#which(format(sorg$xlDateTime, "%j")>130)
-plot(sorgroll.e~sorg$xlDateTime, type='l', ylim=c(0,25), col='blue', lwd=2, ylab="Ecosystem respiration (gm-2d-1)"); lines(sorgroll.w~sorg$xlDateTime, col='red', lwd=2)
+plot(sorgroll.e~sorg$xlDateTime, type='l', ylim=ylim, col='blue', lwd=2, ylab=title); lines(sorgroll.w~sorg$xlDateTime, col='red', lwd=2)
 par(new=TRUE)
 plot(sorg$ER_LT[gs]~format(sorg$xlDateTime, "%j")[gs], col='', axes="FALSE", ylab='', xlab='', lwd=2)
 legend(x=1, y=25, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
-abline(v=156); text(130,25, "Flood >")
-abline(v=(195-1));text(195,-9, "Hailstorm")
-abline(v=223);text(250,25, "< Derecho") 
+abline(v=156); text(150,25, "Flood >");#abline(v=156+7, lty=2)
+abline(v=(195-1));text(195,-9, "Hailstorm");#abline(v=195+7, lty=2)
+abline(v=223);text(235,25, "< Derecho");#abline(v=223+7, lty=2)
 
 flexmin<-min(min(cumsum(sorgroll.e[gs]/48)), min(cumsum(sorgroll.w[gs]/48)))*1.1
 flexmax<-max(max(cumsum(sorgroll.e[gs]/48)), max(cumsum(sorgroll.w[gs]/48)))*1.1
 
-plot(cumsum(sorgroll.e[gs])/48~sorg$xlDateTime[gs], type='l', ylim=c(flexmin, flexmax),col='blue', lwd=2, ylab="Cumulative Ecosystem Respiration (gm-2)")
+plot(cumsum(sorgroll.e[gs])/48~sorg$xlDateTime[gs], type='l', ylim=c(flexmin, flexmax),col='blue', lwd=2, ylab=titlecum)
 lines(cumsum(sorgroll.w[gs])/48~sorg$xlDateTime[gs], col='red', lwd=2)
 par(new=TRUE)
 plot(sorg$ER_LT[gs]~format(sorg$xlDateTime, "%j")[gs], col='', axes="FALSE", ylab='', xlab='', lwd=2)
 legend(x=1, y=25, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
 
+######
+
+#Up-close look at effect of disasters
+
+sorgroll.e.detail<-rollapply(sorgflux.e.thin, width=48*7, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
+sorgroll.w.detail<-rollapply(sorgflux.w.thin, width=48*7, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
+
+
+par(mfrow=c(1,1))
+gs<-which(format(sorg$xlDateTime, "%j")>0)#which(format(sorg$xlDateTime, "%j")>130)
+plot(sorgroll.e.detail[7000:13000]~sorg$xlDateTime[7000:13000], type='l', ylim=(ylim*1.5), col='blue', lwd=2, ylab=title); lines(sorgroll.w.detail~sorg$xlDateTime, col='red', lwd=2)
+par(new=TRUE)
+plot(sorg$ER_LT[7000:13000]~format(sorg$xlDateTime, "%j")[7000:13000], col='', axes="FALSE", ylab='', xlab='', lwd=2)
+legend(x=1, y=25, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
+abline(v=156); text(150,25, "Flood >");abline(v=156+3.5, lty=2)
+abline(v=(195-1));text(195,-9, "Hailstorm");abline(v=195+3.5, lty=2)
+abline(v=223);text(235,25, "< Derecho");abline(v=223+3.5, lty=2)
 

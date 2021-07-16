@@ -50,7 +50,7 @@ lines(zmsm20~format(maize$xlDateTime, "%j"), lwd=3, col='black')
 
 legend(1,ylim.flux[2], legend=c(2020, 2018, 2017),bty='n',cex=0.8, col=c('black', 'red','blue'), lwd=2, y.intersp = 0.8)
 
-maize.20.interp<-unlist(cumsum(umolCO2.to.gC(na.approx(maize[,zm.20])))/48)
+maize.20.interp<-unlist(cumsum(umolCO2.to.gC(na.approx(maize[,zm.20])))/48); print(paste("maize:", tail(maize.20.interp)))
 #maize.19.interp<-cumsum(umolCO2.to.gC(maize.2019$Fc))/48
 maize.18.interp<-unlist(cumsum(umolCO2.to.gC(na.approx(maize.2018[,zm.18])))/48)
 maize.17.interp<-unlist(cumsum(umolCO2.to.gC(na.approx(maize.2017[,zm.17])))/48)
@@ -134,12 +134,13 @@ sorg.add.18<-na.approx(umolCO2.to.gC(c(
   as.numeric(unlist(sorg[which(is.na(sorg.2018[,sb.18])), sb.20])), #2020 sorghum where there is no data for 2018 
   sorg.2018[!is.na(sorg.2018[sb.18]), sb.18])))/48                   #2018 sorghum where we have data for it
 
-sorg.add.18.plot<-cumsum(sorg.add.18); sorg.add.18.plot[is.na(sorg.2018[sb.18])]<-NA
+sorg.add.18.plot<-cumsum(sorg.add.18);sorg.add.18.plot[is.na(sorg.2018[sb.18])]<-NA
+
 
 plot(unlist(cumsum(sorg.add.20))~format(sorg$xlDateTime, "%j"), type='l', ylim=ylim.cum, ylab=ylab.cum, xlab='', lwd=2)
 lines(sorg.add.18.plot~format(sorg.2018$xlDateTime, "%j"), col='red', lwd=2)
 
-
+print(paste("sorghum18:",tail(unlist(cumsum(sorg.add.20)))[5])); print(paste("sorghum20":tail(cumsum(sorg.add.18))[5]))
 
 #####
 
