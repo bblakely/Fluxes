@@ -1,5 +1,7 @@
 #Script for exploring causes of sorghuum respiration
 
+if(!exists("sorg")){source("FluxComparion2020.R")}#('ReadAll.R')}
+
 par(mfrow=c(1,1))
 plot(sorg$ER~sorg$xlDateTime,ylab=c("Sorghum ER"), xlab="Date");lines(sorg.er~sorg$xlDateTime, lwd=0.5)
 ersub<-which(!is.na(sorg$ER)&format(sorg$xlDateTime, "%m")=="08")
@@ -63,6 +65,7 @@ sorg.w<-sorg;sorg.w[which(sorg$Wd<west.deg[1]|sorg$Wd>west.deg[2]),]<-NA
 sorgflux.e<-umolCO2.to.gC(sorg.e$ER_LT); sorgflux.w<-umolCO2.to.gC(sorg.w$ER_LT)
 
 #systematic differences in hours...
+par(mfrow=c(1,2))
 hours<-sorg$H
 hist(hours[east.recs])
 hist(hours[west.recs])
@@ -86,7 +89,7 @@ for(i in remove.east.hours){
   
 }
 
-#hist(sorg.e.thin$H[east.recs], breaks=c(-1:23));hist(sorg.w.thin$H[west.recs], breaks=c(-1:23))
+hist(sorg.e.thin$H[east.recs], breaks=c(-1:23));hist(sorg.w.thin$H[west.recs], breaks=c(-1:23))
 sorgflux.e.thin<-umolCO2.to.gC(sorg.e.thin$ER_LT); sorgflux.w.thin<-umolCO2.to.gC(sorg.w.thin$ER_LT)
 #plot(sorgflux.e.thin~sorg.e$xlDateTime); points(sorgflux.w.thin~sorg.w$xlDateTime, col='red')
 
@@ -136,3 +139,5 @@ abline(v=156); text(150,25, "Flood >");abline(v=156+3.5, lty=2)
 abline(v=(195-1));text(195,-9, "Hailstorm");abline(v=195+3.5, lty=2)
 abline(v=223);text(235,25, "< Derecho");abline(v=223+3.5, lty=2)
 
+write.csv(sorg.e.thin, "Sorghum_L6_East_Undisturbed.csv")
+write.csv(sorg.w.thin, "Sorghum_L6_West_Disturbed.csv")
