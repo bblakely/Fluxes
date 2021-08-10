@@ -2,20 +2,20 @@
 #rm(list=setdiff(ls(), c("sorg", "sorg.raw")))
 if(!exists("sorg")){source('ReadAll.R')}
 
-sorg.east.raw<-read_excel("Sorghum_2020_L6_EAST.xls", sheet=2,skip=2)
+sorg.east.raw<-read_excel("Sorghum_2020_L6_EAST_mod.xls", sheet=2,skip=2)
 sorg.east.raw[sorg.east.raw==-9999]<-NA
 sorg.east<-sorg.east.raw
 
-sorg.west.raw<-read_excel("Sorghum_2020_L6_WEST.xls", sheet=2,skip=2)
+sorg.west.raw<-read_excel("Sorghum_2020_L6_WEST_mod.xls", sheet=2,skip=2)
 sorg.west.raw[sorg.west.raw==-9999]<-NA
 sorg.west<-sorg.west.raw
 
 par(mfrow=c(1,2))
-plot(sorg.west$ER_LT~sorg$xlDateTime, ylim=c(-40, 25))
-points(sorg.west$ER~sorgt$xlDateTime, col='blue')
+plot(sorg.west$ER_LT~sorg$xlDateTime, ylim=c(-40, 30))
+points(sorg.west$ER~sorg$xlDateTime, col='red')
 
-plot(sorg.east$ER_LT~sorg$xlDateTime, ylim=c(-40, 25))
-points(sorg.east$ER~sorg$xlDateTime, col='red')
+plot(sorg.east$ER_LT~sorg$xlDateTime, ylim=c(-40, 30))
+points(sorg.east$ER~sorg$xlDateTime, col='blue')
 
 library(zoo); library(bigleaf)
 
@@ -34,7 +34,7 @@ library(zoo); library(bigleaf)
 #####
 #smooth em out
 
-
+par(mfrow=c(1,1))
 plot(rollmean(umolCO2.to.gC(sorg.east$Fco2), k=48, na.pad=TRUE, na.rm=TRUE)~format(sorg$xlDateTime, "%j"), type='l', col='lightblue', main="Sorghum", lwd=0.5, ylab="Carbon Flux (gC d-1)", xlab='date', ylim=c(-20, 15))
 lines(rollmean(umolCO2.to.gC(sorg.west$Fco2), k=48, na.pad=TRUE, na.rm=TRUE)~format(sorg$xlDateTime, "%j"),col='lightpink', lwd=0.5)
 
@@ -85,3 +85,4 @@ plot(sorg.east$Fco2[gs]~H[gs], ylab="Fco2 (Sorghum)", xlab="Time of day (DOY 150
 
 col=rep("black", 17568); col[sorg.east$Fsd<10]<-"red"
 points(sorg.east$Fco2[gs]~H[gs], col=col[gs])
+
