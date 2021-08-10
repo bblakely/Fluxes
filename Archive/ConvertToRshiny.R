@@ -1,6 +1,7 @@
 library(readxl)
 
-maize.raw.orig<-read_excel("Sorghum_2020_L6.xls", sheet=2,skip=2)
+maize.raw.orig<-read_excel("MiscanthusNoBasalt_2020_L6.xls", sheet=2,skip=2)
+#maize.raw.orig<-read.csv("MaizeCon_2020_L6.xls", sheet=2,skip=2)
 maize.raw.orig[maize.raw.orig==-9999]<-NA
 
 timestamp.orig<-as.character(maize.raw.orig$xlDateTime)
@@ -58,7 +59,7 @@ if(length(pfp.varnames)==length(rs.varnames)){
 
 rshiny.dat$DateTime<-timestamp
 rshiny.write<-rbind(rs.units, rshiny.dat)
-write.csv(rshiny.write, "Sorghum_fluxes_2020.csv", row.names=FALSE, na="NAN", quote=FALSE)
+write.csv(rshiny.write, "Miscanthus_2020_Fluxes.csv", row.names=FALSE, na="NAN", quote=FALSE)
 
 
 ###FUNCTIONALIZE THIS IT'S LITERALLY THE SAME CODE WITH DIFFERENT INPUTS#
@@ -69,7 +70,7 @@ rs.units<-varguide[1,]
 pfp.varnames<-as.character(varguide[4,]) 
 pfp.units<-varguide[3,]
 
-pfp.varnames[2]<-Albedo
+pfp.varnames[2]<-"Albedo"
 
 rshiny.dat<-data.frame(matrix(nrow=nrow(maize.raw), ncol=length(rs.varnames), data=NA))
 
@@ -107,9 +108,6 @@ if(length(pfp.varnames)==length(rs.varnames)){
 rshiny.dat$DateTime<-timestamp
 
 rshiny.write<-rbind(rs.units, rshiny.dat)
-write.csv(rshiny.write, "Sorghum_biomet_2020.csv", row.names=FALSE, quote=FALSE, na="NAN")
+write.csv(rshiny.write, "Miscanthus_2020_biomet.csv", row.names=FALSE, quote=FALSE, na="NAN")
 
 
-
-#Other
-plot(maize.raw$Precip)
