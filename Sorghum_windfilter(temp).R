@@ -1,7 +1,10 @@
-sorg.raw<-read_excel("Sorghum_2020_L6.xls", sheet=2,skip=2)
+library(readxl)
+library(bigleaf)
+library(zoo)
+sorg.raw<-read_excel("Sorghum_2018_2020_L6.xls", sheet=2,skip=2)
 sorg.raw[sorg.raw==-9999]<-NA
 
-sorg<-sorg.raw
+sorg<-sorg.raw[as.numeric(format(sorg.raw$xlDateTime, "%Y"))==2020,]
 #sorg.2018.months; sorg$xlDateTime<-sorg.raw$xlDateTime
 sorg$H<-as.numeric(format(sorg$xlDateTime, "%H"))
 
@@ -93,3 +96,4 @@ plot(sorg$GPP_LT[gs]~format(sorg$xlDateTime, "%j")[gs], col='', axes="FALSE", yl
 #abline(v=c(132, 163))
 legend(x=140, y=70, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
 abline(v=c(195, 210, 233, 249), lty=3)
+
