@@ -1,14 +1,18 @@
 #Data filtered at L2
 #rm(list=setdiff(ls(), c("sorg", "sorg.raw")))
+
 if(!exists("sorg")){source('ReadAll.R')}
 
-sorg.east.raw<-read_excel("Sorghum_2020_L6_EAST_mod.xls", sheet=2,skip=2)
+setwd("D:/R/Fluxes/WindFilter/Data")
+sorg.east.raw<-read_excel("Sorghum_2020_EAST_L6_EP.xls", sheet=2,skip=2)
 sorg.east.raw[sorg.east.raw==-9999]<-NA
 sorg.east<-sorg.east.raw
 
-sorg.west.raw<-read_excel("Sorghum_2020_L6_WEST_mod.xls", sheet=2,skip=2)
+sorg.west.raw<-read_excel("Sorghum_2020_WEST_L6_EP.xls", sheet=2,skip=2)
 sorg.west.raw[sorg.west.raw==-9999]<-NA
 sorg.west<-sorg.west.raw
+
+setwd("D:/R/Fluxes")
 
 par(mfrow=c(1,2))
 plot(sorg.west$ER_LT~sorg$xlDateTime, ylim=c(-40, 30))
@@ -34,7 +38,7 @@ library(zoo); library(bigleaf)
 #####
 #smooth em out
 
-par(mfrow=c(1,1))
+par(mfrow=c(2,1))
 plot(rollmean(umolCO2.to.gC(sorg.east$Fco2), k=48, na.pad=TRUE, na.rm=TRUE)~format(sorg$xlDateTime, "%j"), type='l', col='lightblue', main="Sorghum", lwd=0.5, ylab="Carbon Flux (gC d-1)", xlab='date', ylim=c(-20, 15))
 lines(rollmean(umolCO2.to.gC(sorg.west$Fco2), k=48, na.pad=TRUE, na.rm=TRUE)~format(sorg$xlDateTime, "%j"),col='lightpink', lwd=0.5)
 
@@ -45,8 +49,18 @@ lines(sorgroll.es~format(sorg$xlDateTime, "%j"), lwd=3, col="blue")
 lines(sorgroll.we~format(sorg$xlDateTime, "%j"), lwd=3, col='red')
 
 abline(v=156) #Flood
-abline(v=(195-1)) #Hailstorm
-abline(v=223) #derecho
+abline(v=164, lty=3) #Replant
+# abline(v=(195-1)) #Hailstorm
+# abline(v=223) #derecho
+abline(v=282) #End of split series
+
+#cumulative
+sorg.es.cum<-cumsum(umolCO2.to.gC(sorg.east$Fco2))/48
+sorg.ws.cum<-cumsum(umolCO2.to.gC(sorg.west$Fco2))/48
+
+plot(sorg.es.cum, type='l', col='blue', ylim=c(-1000,100),ylab="Cumulative Carbon Flux (gC m-2)"); lines(sorg.ws.cum,col='red')
+
+
 
 #GPP
 plot(rollmean(umolCO2.to.gC(sorg.east$GPP_LT), k=48, na.pad=TRUE, na.rm=TRUE)~format(sorg$xlDateTime, "%j"), type='l', col='lightblue', main="Sorghum", lwd=0.5, ylab="Carbon Flux (gC d-1)", xlab='date', ylim=c(-10, 25))
@@ -59,8 +73,17 @@ lines(sorgroll.es~format(sorg$xlDateTime, "%j"), lwd=3, col="blue")
 lines(sorgroll.we~format(sorg$xlDateTime, "%j"), lwd=3, col='red')
 
 abline(v=156) #Flood
-abline(v=(195-1)) #Hailstorm
-abline(v=223) #derecho
+abline(v=164, lty=3) #Replant
+# abline(v=(195-1)) #Hailstorm
+# abline(v=223) #derecho
+abline(v=282) #End of split series
+
+
+#cumulative
+sorg.es.cum<-cumsum(umolCO2.to.gC(sorg.east$GPP_LT))/48
+sorg.ws.cum<-cumsum(umolCO2.to.gC(sorg.west$GPP_LT))/48
+
+plot(sorg.es.cum, type='l', col='blue', ylim=c(0,2500),ylab="Cumulative Carbon Flux (gC m-2)"); lines(sorg.ws.cum,col='red')
 
 #Respiration
 
@@ -74,15 +97,27 @@ lines(sorgroll.es~format(sorg$xlDateTime, "%j"), lwd=3, col="blue")
 lines(sorgroll.we~format(sorg$xlDateTime, "%j"), lwd=3, col='red')
 
 abline(v=156) #Flood
-abline(v=(195-1)) #Hailstorm
-abline(v=223) #derecho
+abline(v=164, lty=3) #Replant
+# abline(v=(195-1)) #Hailstorm
+# abline(v=223) #derecho
+abline(v=282) #End of split series
 
-#ok what's going on here
-par(mfrow=c(1,1))
-H<-as.numeric(format(sorg$xlDateTime, "%H%M"))
-gs<-which(format(sorg.east$xlDateTime, "%j")%in%c(150:300))
-plot(sorg.east$Fco2[gs]~H[gs], ylab="Fco2 (Sorghum)", xlab="Time of day (DOY 150 - 300)")
 
-col=rep("black", 17568); col[sorg.east$Fsd<10]<-"red"
-points(sorg.east$Fco2[gs]~H[gs], col=col[gs])
+#cumulative
+sorg.es.cum<-cumsum(umolCO2.to.gC(sorg.east$ER_LT))/48
+sorg.ws.cum<-cumsum(umolCO2.to.gC(sorg.west$ER_LT))/48
+
+plot(sorg.es.cum, type='l', col='blue', ylim=c(0,2000),ylab="Cumulative Carbon Flux (gC m-2)"); lines(sorg.ws.cum,col='red')
+
+
+
+
+# #ok what's going on here
+# par(mfrow=c(1,1))
+# H<-as.numeric(format(sorg$xlDateTime, "%H%M"))
+# gs<-which(format(sorg.east$xlDateTime, "%j")%in%c(150:300))
+# plot(sorg.east$Fco2[gs]~H[gs], ylab="Fco2 (Sorghum)", xlab="Time of day (DOY 150 - 300)")
+# 
+# col=rep("black", 17568); col[sorg.east$Fsd<10]<-"red"
+# points(sorg.east$Fco2[gs]~H[gs], col=col[gs])
 

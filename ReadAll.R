@@ -7,9 +7,9 @@ maize.raw<-read_excel("MaizeCon_2020_L6.xls", sheet=2,skip=2)
 maize.raw[maize.raw==-9999]<-NA
 maize<-maize.raw#[1:(nrow(maize.raw)-1),]
 
-sorg.raw<-read_excel("Sorghum_2020_L6.xls", sheet=2,skip=2)
+sorg.raw<-read_excel("Sorghum_2018_2020_L6.xls", sheet=2,skip=2)
 sorg.raw[sorg.raw==-9999]<-NA
-sorg<-sorg.raw
+sorg<-sorg.raw[as.numeric(format(sorg.raw$xlDateTime, "%Y"))==2020,]
 
 misc.raw<-read_excel("MiscanthusNoBasalt_2020_L6.xls", sheet=2,skip=2)
 misc<-misc.raw#[1030:6715,]

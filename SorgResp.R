@@ -3,7 +3,7 @@
 if(!exists("sorg")){source("ReadAll.R")}
 
 sorg.bkup<-sorg
-sorg<-sorg.2018
+#sorg<-sorg.2018
 
 par(mfrow=c(1,1))
 plot(sorg$ER~sorg$xlDateTime,ylab=c("Sorghum ER"), xlab="Date");lines(sorg.er~sorg$xlDateTime, lwd=0.5)
@@ -65,7 +65,7 @@ west.recs<-which(sorg$Wd>west.deg[1]&sorg$Wd<west.deg[2])
 sorg.e<-sorg; sorg.e[which(sorg$Wd<east.deg[1]|sorg$Wd>east.deg[2]),]<-NA
 sorg.w<-sorg;sorg.w[which(sorg$Wd<west.deg[1]|sorg$Wd>west.deg[2]),]<-NA
 
-sorgflux.e<-umolCO2.to.gC(sorg.e$GPP_LT); sorgflux.w<-umolCO2.to.gC(sorg.w$GPP_LT)
+sorgflux.e<-umolCO2.to.gC(sorg.e$ER_LT); sorgflux.w<-umolCO2.to.gC(sorg.w$ER_LT)
 
 #systematic differences in hours...
 par(mfrow=c(1,2))
@@ -93,7 +93,7 @@ for(i in remove.east.hours){
 }
 
 hist(sorg.e.thin$H[east.recs], breaks=c(-1:23));hist(sorg.w.thin$H[west.recs], breaks=c(-1:23))
-sorgflux.e.thin<-umolCO2.to.gC(sorg.e.thin$GPP_LT); sorgflux.w.thin<-umolCO2.to.gC(sorg.w.thin$GPP_LT)
+sorgflux.e.thin<-umolCO2.to.gC(sorg.e.thin$ER_LT); sorgflux.w.thin<-umolCO2.to.gC(sorg.w.thin$ER_LT)
 #plot(sorgflux.e.thin~sorg.e$xlDateTime); points(sorgflux.w.thin~sorg.w$xlDateTime, col='red')
 
 sorgroll.e<-rollapply(sorgflux.e.thin, width=48*14, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
@@ -101,15 +101,15 @@ sorgroll.w<-rollapply(sorgflux.w.thin, width=48*14, fill=NA, na.rm=TRUE, FUN='me
 
 
 #ylim=c(-20, 10)
-title<-"GPP (g m-2 d-1)"
-titlecum<-"Cumulative GPP (g m-2)"
+title<-"ER (g m-2 d-1)"
+titlecum<-"Cumulative ER (g m-2)"
 ylim=c(0,25)
 
 par(mfrow=c(2,1), mar=c(2,4,1,1))
 gs<-which(format(sorg$xlDateTime, "%j")>0)#which(format(sorg$xlDateTime, "%j")>130)
 plot(sorgroll.e~sorg$xlDateTime, type='l', ylim=ylim, col='blue', lwd=2, ylab=title); lines(sorgroll.w~sorg$xlDateTime, col='red', lwd=2)
 par(new=TRUE)
-plot(sorg$GPP_LT[gs]~format(sorg$xlDateTime, "%j")[gs], col='', axes="FALSE", ylab='', xlab='', lwd=2)
+plot(sorg$ER_LT[gs]~format(sorg$xlDateTime, "%j")[gs], col='', axes="FALSE", ylab='', xlab='', lwd=2)
 legend(x=1, y=25, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
 # abline(v=156); text(150,25, "Flood >");#abline(v=156+7, lty=2)
 # abline(v=(195-1));text(195,-9, "Hailstorm");#abline(v=195+7, lty=2)
@@ -121,26 +121,32 @@ flexmax<-max(max(cumsum((sorgroll.e[gs]/48)[which(!is.na(sorgroll.e[gs]))]), na.
 plot(cumsum((sorgroll.e[gs]/48)[which(!is.na(sorgroll.e[gs]))])~(sorg$xlDateTime[gs])[which(!is.na(sorgroll.e[gs]))], type='l', ylim=c(flexmin, flexmax),xlim=c(as.numeric(min(sorg$xlDateTime[gs])), as.numeric(max(sorg$xlDateTime[gs]))), col='blue', lwd=2, ylab=titlecum)
 lines(cumsum((sorgroll.w[gs]/48)[which(!is.na(sorgroll.w[gs]))])~(sorg$xlDateTime[gs])[which(!is.na(sorgroll.w[gs]))], col='red', lwd=2)
 par(new=TRUE)
-plot(sorg$GPP_LT[gs]~format(sorg$xlDateTime, "%j")[gs], col='', axes="FALSE", ylab='', xlab='', lwd=2)
+plot(sorg$ER_LT[gs]~format(sorg$xlDateTime, "%j")[gs], col='', axes="FALSE", ylab='', xlab='', lwd=2)
 legend(x=1, y=25, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
 
 ######
 
 #Up-close look at effect of disasters
 
-sorgroll.e.detail<-rollapply(sorgflux.e.thin, width=48*7, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
-sorgroll.w.detail<-rollapply(sorgflux.w.thin, width=48*7, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
-
-
-par(mfrow=c(1,1))
-gs<-which(format(sorg$xlDateTime, "%j")>0)#which(format(sorg$xlDateTime, "%j")>130)
-plot(sorgroll.e.detail[7000:13000]~sorg$xlDateTime[7000:13000], type='l', ylim=(ylim*1.5), col='blue', lwd=2, ylab=title); lines(sorgroll.w.detail~sorg$xlDateTime, col='red', lwd=2)
-par(new=TRUE)
-plot(sorg$GPP_LT[7000:13000]~format(sorg$xlDateTime, "%j")[7000:13000], col='', axes="FALSE", ylab='', xlab='', lwd=2)
-legend(x=1, y=25, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
-# abline(v=156); text(150,25, "Flood >");abline(v=156+3.5, lty=2)
-# abline(v=(195-1));text(195,-9, "Hailstorm");abline(v=195+3.5, lty=2)
-# abline(v=223);text(235,25, "< Derecho");abline(v=223+3.5, lty=2)
-
-write.csv(sorg.e.thin, "Sorghum_L6_East_Undisturbed.csv")
-write.csv(sorg.w.thin, "Sorghum_L6_West_Disturbed.csv")
+# sorgroll.e.detail<-rollapply(sorgflux.e.thin, width=48*7, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
+# sorgroll.w.detail<-rollapply(sorgflux.w.thin, width=48*7, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
+# 
+# 
+# par(mfrow=c(1,1))
+# gs<-which(format(sorg$xlDateTime, "%j")>0)#which(format(sorg$xlDateTime, "%j")>130)
+# plot(sorgroll.e.detail[7000:13000]~sorg$xlDateTime[7000:13000], type='l', ylim=(ylim*1.5), col='blue', lwd=2, ylab=title); lines(sorgroll.w.detail~sorg$xlDateTime, col='red', lwd=2)
+# par(new=TRUE)
+# plot(sorg$GPP_LT[7000:13000]~format(sorg$xlDateTime, "%j")[7000:13000], col='', axes="FALSE", ylab='', xlab='', lwd=2)
+# legend(x=1, y=25, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
+# # abline(v=156); text(150,25, "Flood >");abline(v=156+3.5, lty=2)
+# # abline(v=(195-1));text(195,-9, "Hailstorm");abline(v=195+3.5, lty=2)
+# # abline(v=223);text(235,25, "< Derecho");abline(v=223+3.5, lty=2)
+# 
+# #write.csv(sorg.e.thin, "Sorghum_L6_East_Undisturbed.csv")
+# #write.csv(sorg.w.thin, "Sorghum_L6_West_Disturbed.csv")
+# 
+# #Check outliers
+# par(mfrow=c(1,2))
+# plot(sorg.e$ER_LT); points(sorg.e$ER, col='blue')
+# plot(sorg.w$ER_LT); points(sorg.w$ER, col='red')
+# 
