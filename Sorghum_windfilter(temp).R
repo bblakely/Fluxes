@@ -1,7 +1,10 @@
-sorg.raw<-read_excel("Sorghum_2020_L6.xls", sheet=2,skip=2)
+library(readxl)
+library(bigleaf)
+library(zoo)
+sorg.raw<-read_excel("Sorghum_2018_2020_L6.xls", sheet=2,skip=2)
 sorg.raw[sorg.raw==-9999]<-NA
 
-sorg<-sorg.raw
+sorg<-sorg.raw[as.numeric(format(sorg.raw$xlDateTime, "%Y"))==2019,]
 #sorg.2018.months; sorg$xlDateTime<-sorg.raw$xlDateTime
 sorg$H<-as.numeric(format(sorg$xlDateTime, "%H"))
 
@@ -58,17 +61,19 @@ for(i in remove.east.hours){
 
 hist(sorg.e.thin$H[east.recs], breaks=c(-1:23));hist(sorg.w.thin$H[west.recs], breaks=c(-1:23))
 
-sorgflux.e.thin<-umolCO2.to.gC(sorg.e.thin$GPP_LT); sorgflux.w.thin<-umolCO2.to.gC(sorg.w.thin$GPP_LT)
+sorgflux.e.thin<-umolCO2.to.gC(sorg.e.thin$Fco2); sorgflux.w.thin<-umolCO2.to.gC(sorg.w.thin$Fco2)
 
 plot(sorgflux.e.thin~sorg.e$xlDateTime); points(sorgflux.w.thin~sorg.w$xlDateTime, col='red')
 
 sorgroll.e<-rollapply(sorgflux.e.thin, width=48*14, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
 sorgroll.w<-rollapply(sorgflux.w.thin, width=48*14, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
 
-plot(sorgroll.e~sorg$xlDateTime, type='l'); lines(sorgroll.w~sorg$xlDateTime, col='red')
+par(mfrow=c(2,1),mar=c(2,4,1,1))
+
+plot(sorgroll.e~sorg$xlDateTime, type='l', col='blue', lwd=2, ylab=("ER"), ylim=c(0,10)); lines(sorgroll.w~sorg$xlDateTime, col='red', lwd=2)
 par(new=TRUE)
-plot(sorg$GPP_LT~format(sorg$xlDateTime, "%j"), col='', axes="FALSE", ylab='', xlab='')
-abline(v=c(132, 163))
+plot(sorg$GPP_LT~format(sorg$xlDateTime, "%j"), col='NA', axes="FALSE", ylab='', xlab='')
+#abline(v=c(132, 163))
 # 
 # par(new=TRUE)
 # plot(sorg$GPP_LT~format(sorg$xlDateTime, "%j"), col='', axes="FALSE", ylab='', xlab='')
@@ -82,14 +87,29 @@ abline(v=c(132, 163))
 # text(205,25, "< Hailstorm")
 # text(233, -20, "< Derecho")
 
-gs<-which(format(sorg$xlDateTime, "%j")>130)
+gs<-which(format(sorg$xlDateTime, "%j")<366)
 flexmin<-min(min(cumsum(sorgroll.e[gs]/48)), min(cumsum(sorgroll.w[gs]/48)))*1.1
 flexmax<-max(max(cumsum(sorgroll.e[gs]/48)), max(cumsum(sorgroll.w[gs]/48)))*1.1
 
-plot(cumsum(sorgroll.e[gs])/48~sorg$xlDateTime[gs], type='l', ylim=c(flexmin, flexmax),col='blue', lwd=2, ylab="Gross Primary Productivity")
+plot(cumsum(sorgroll.e[gs])/48~sorg$xlDateTime[gs], type='l', ylim=c(flexmin, flexmax),col='blue', lwd=2, ylab="Cumulative ER")
 lines(cumsum(sorgroll.w[gs])/48~sorg$xlDateTime[gs], col='red', lwd=2)
 par(new=TRUE)
-plot(sorg$GPP_LT[gs]~format(sorg$xlDateTime, "%j")[gs], col='', axes="FALSE", ylab='', xlab='', lwd=2)
+plot(sorg$GPP_LT[gs]~format(sorg$xlDateTime, "%j")[gs], col='NA', axes="FALSE", ylab='', xlab='', lwd=2)
 #abline(v=c(132, 163))
-legend(x=140, y=70, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
-abline(v=c(195, 210, 233, 249), lty=3)
+legend(x=70, y=50, legend=c("flood", "nonflood"), lwd=2, col=c("red", "blue"))
+#abline(v=c(195, 210, 233, 249), lty=3)
+
+
+# #Check met...
+# c1 <- rgb(173,216,230,max = 255, alpha = 90, names = "lt.blue")
+# c2 <- rgb(255,192,203, max = 255, alpha = 90,names = "lt.pink")
+# 
+# 
+# E<-sorg.e.thin$RH;W<-sorg.w.thin$RH
+# #HE<-hist(E); HW<-hist(W)
+# 
+# #plot(HE, col=c1, ylim=c(0,1200)); plot(HW, col=c2, add=TRUE)
+# 
+# 
+# summ<-100*(colMeans(sorg.e.thin[sorg$H%in%c(8:17), 2:ncol(sorg.e.thin)], na.rm=TRUE)-colMeans(sorg.w.thin[sorg$H%in%c(8:17),2:ncol(sorg.w.thin)], na.rm=TRUE))/colMeans(sorg.w.thin[sorg$H%in%c(8:17),2:ncol(sorg.w.thin)], na.rm=TRUE)
+# summ[abs(summ)>10]

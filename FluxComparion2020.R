@@ -1,7 +1,7 @@
 
 library(readxl)
 
-maize.raw<-read_excel("MaizeCon_2020_L6.xls", sheet=2,skip=2)
+maize.raw<-read_excel("MaizeNoBasalt_2020_L6.xls", sheet=2,skip=2)
 maize.raw[maize.raw==-9999]<-NA
 maize<-maize.raw#[1:(nrow(maize.raw)-1),]
 
@@ -128,7 +128,7 @@ lines(misc.roll~maize$xlDateTime, lwd=3, col='light blue')
 
 legend(1577836800, 30,legend=c("maize", "sorghum", "miscanthus"), col=c('orange','forest green', 'light blue'), lwd=2, bty='n')
 
-
+par(mfrow=c(1,1))
 #C-C-C-combo plot!
 maize.gpp<-(umolCO2.to.gC(maize$GPP_LT))*-1
 sorg.gpp<-(umolCO2.to.gC(sorg$GPP_LT))*-1
