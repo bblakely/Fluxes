@@ -108,8 +108,8 @@ write.csv(met.rshiny.write, file=met_out, row.names=FALSE, quote=FALSE, na="NAN"
 #Set your inputs
 
 infilename<-file.choose()
-year<-"2019"
-crop<-"Maize"
+year<-"2021"
+crop<-"Sorghum"
 
 #Add soy naming in soy years
 if(year%in%c("2022", "2019", "2016", "2013", "2010")&crop%in%c("Maize", "Sorghum")){
@@ -121,9 +121,10 @@ flux_out<-paste("Writeout/Efarm_",crop,"_",year,"_fluxes.csv", sep='')
 
 
 sheet=2; skip=2
-pfp.version=2
+pfp.version=3
 
 Rshinyize(infilename=infilename,met_out=met_out,flux_out=flux_out, 
-            year=year, sheet=2, skip=2, pfp.version=2)
+            year=year, sheet=2, skip=2, pfp.version=3)
+
 
 rm(infilename)
