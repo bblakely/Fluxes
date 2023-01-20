@@ -6,6 +6,36 @@
 #3) plug into Abraha formula
 #4) get GWI for carbon
 
+#Prelminaries: functions and libraries, data read####
+
+if (!exists("sorg.hvst.sum")){source("LongRecord_2.R")}
+
+library(zoo)
+#Cleanup; prevents objects from previous runs from showing up erroneously in the plots
+#rm(list=setdiff(ls(), c("sorg.hvst.sum","cumulatives", "maize.merge", "maize.c.merge", "misc.merge", "misc.c.merge", "sorg.merge", "switchgrass", "sorg.yield","misc.yield","maize.yield","switch.yield","maize.c.yield", "misc.c.yield")))
+
+#indices for years
+
+allyr<-c(2008:2022) #all years
+nosoy<-c(2008, 2009, 2011, 2012, 2014, 2015, 2017, 2018, 2020, 2021) #years where annuals were NOT in soy
+sorgyr<-c(2018:2022)#years when the sorghum site was active
+ctrlyr<-c(2017:2022) #years where the 'control' sites are active
+ogyr<-c(2008:2016) #original 8-year span with mg, sw, np, and zm
+
+set<-allyr#The set of data you will use for this whole script
+#applies the time subset from "set" 
+subtime<-function(dat, subset=set){
+  
+  dat.time<-as.numeric(format(dat$xlDateTime, "%Y"))
+  ind<-which(dat.time%in%subset)
+  
+  dat.out<-dat[ind,]
+  
+  return(dat.out)
+  
+}
+
+#####
 
 
 #1) daily albedo ####
@@ -90,7 +120,12 @@ mgrf<-rfparam(misc.merge)*(maize.alb-misc.alb)
 #maize to switchgrass
 swrf<-rfparam(switchgrass)*(maize.alb-switch.alb)
 
+#maize to prairie
+nprf<-rfparam(nativeprairie)*(maize.alb-np.alb)
+
 #####
+
+
 
 #3) GWI formula from Abraha 2021
 
@@ -128,7 +163,8 @@ aco2<-5.35*log((co2.ref+1)/co2.ref) #radiative efficiency co2, from Bright 2020,
 
 kco2<-(aco2*Mair*10^6)/(Mco2*mair.kg) #global mean radiative efficiency, W m-2 kg-1
 
-dat.eesf.alb<- RFtoa/(kco2*Ae*0.5) #kg CO2-eq m-2
+#dat.eesf.alb<- RFtoa/(kco2*Ae*0.5) #kg CO2-eq m-2, native units from Bright 2020
+dat.eesf.alb<- (RFtoa/(kco2*Ae*0.5))*10 #Mg CO2-eq ha-1, for comparison with gwi
 
 
 ##Carbon GWI
@@ -152,11 +188,12 @@ yearseq<-diff(dat.hvst.sum[endofyear]) #net carbon storage after harvest removal
 
 #dat.gwi.co2<-mean(yearseq)*0.37 #in kgCo2/m2; conversion:tC/ha -> 44.01tCO2 / 12.1tC * 1000kgCo2 / tCO2 * 1 ha / 10000m2 -> kGCO2/m2
 #dat.gwi.co2<-mean(yearseq)*3.66 #in MgCo2/ha == tCO2/ha; conversion: 44.01tCO2 / 12.1tC
-#dat.gwi.co2<-(mean(yearseq)*3.66)-8.4 #to represent relative to maize
-dat.gwi.co2<-(mean(yearseq)*0.37)-0.84 #to represent relative to maize
+dat.gwi.co2<-(mean(yearseq)*3.66)-8.4 #in MgCo2/ha == tCO2/ha; to represent relative to maize
+#dat.gwi.co2<-(mean(yearseq)*0.37)-0.84 #in kgCo2/m2; to represent relative to maize
 
-return(data.frame(rbind(dat.eesf.alb, dat.gwi.co2)))
-
+#return(data.frame(rbind(dat.eesf.alb, dat.gwi.co2)))# for individual plots?
+#return(data.frame(rbind(dat.gwi.alb, dat.gwi.co2)))#for combined plot
+return(data.frame(rbind(dat.eesf.alb, dat.gwi.alb, dat.gwi.co2))) #both
 }
 
 
@@ -166,67 +203,65 @@ return(data.frame(rbind(dat.eesf.alb, dat.gwi.co2)))
 
 
 switch.gwi<-calcgwi(switchgrass, switch.yield, swrf, nodatyr=0)
-misc.gwi<-calcgwi(misc.merge, misc.yield, mgrf, nodatyr=3)
-sorg.gwi<-calcgwi(sorg.merge, sorg.yield, sbrf, nodatyr=2)
-maize.gwi<-calcgwi(maize.merge, maize.yield, rep(0, 366), nodatyr=2)
+misc.gwi<-calcgwi(misc.merge, misc.yield, mgrf, nodatyr=1)#originally 3...
+sorg.gwi<-calcgwi(sorg.merge, sorg.yield, sbrf, nodatyr=1)#originally 2
+maize.gwi<-calcgwi(maize.merge, maize.yield, rep(0, 366), nodatyr=1) #originally 2
+np.gwi<-calcgwi(nativeprairie, np.yield, nprf, nodatyr=0)
 
-names<-rep(c("switchgrass", "miscanthus", "sorghum", "maize"), each=2)
-numbers<-rbind(switch.gwi, misc.gwi, sorg.gwi, maize.gwi)
-types<-rep(c("albedo", "carbon"), 4)
+names<-rep(c("switchgrass", "miscanthus", "sorghum", "maize", "prairie"), each=3)
+numbers<-rbind(switch.gwi, misc.gwi, sorg.gwi, maize.gwi, np.gwi)
+types<-rep(c("albedo.eesf","albedo.gwi", "carbon"), 5)
 dat.gwi<-cbind(names, numbers, types); colnames(dat.gwi)[2]<-"dat"
 
 library(ggplot2)
-# 
-# ggplot(dat.gwi, aes(x = names, y = dat)) +
-#   geom_bar(
-#     stat = "identity", position = position_stack(),
-#     color = "white", fill = types
-#   ) +
-#   coord_flip()+
-#   theme_minimal()
 
-ggplot(dat.gwi) +
+
+#Plotting for GWI
+ggplot(dat.gwi[dat.gwi$types%in%c("albedo.gwi", "carbon"),]) +
   aes(x = names, fill = types, weight = dat) +
-  geom_bar() +
-  scale_fill_manual(
-    values = c(carbon = "#BABEC0",
-               albedo = "#8B96C2")) +
+  geom_bar(color='black') +
+  scale_fill_manual(values = c(carbon = "#BABEC0",albedo.gwi = "#8B96C2"))+
   labs(x = "Feedstock",
       y = "Mg CO2-eq ha-1 y-1",
     fill = "forcing") +
   theme_minimal()
 
+
+pal <- c("maize" = "orange", "miscanthus" = "blue", "switchgrass" = "light pink", "sorghum" = "forestgreen", "prairie"="plum3")
+
+
 #plotting for eesf
 
-if (eesf==TRUE){
-ggplot(dat.gwi[dat.gwi$types=="albedo",]) +
-  aes(x = names, weight = dat) +
-  geom_bar(fill = "#112446") +
+ggplot(dat.gwi[dat.gwi$types=="albedo.eesf",]) +
+  aes(x = names, weight = dat, fill=names) +
+  geom_bar(colour="black",show.legend = FALSE)+
+  scale_fill_manual(values=pal)+  
   labs(
     x = "Feedstock",
-    y = "kg Co2-eq m-2",
-    title = "ALbedo-equivalent Single pulse"
+    y = "Mg Co2-eq ha-1",
+    title = "albedo-equivalent co2 (single pulse)"
   ) +
   theme_minimal()+
-  ylim(c(-9, 2))
+  ylim(c(-90, 20))
 
 
 ggplot(dat.gwi[dat.gwi$types=="carbon",]) +
-  aes(x = names, weight = dat) +
-  geom_bar(fill = "#112446") +
+  aes(x = names, weight = dat, fill=names) +
+  geom_bar(colour="black",show.legend = FALSE)+
+  scale_fill_manual(values=pal)+
   labs(
     x = "Feedstock",
-    y = "kg Co2-eq m-2",
-    title = "Co2 annual"
+    y = "Mg Co2-eq ha-1",
+    title = "actual co2 (annual)"
   ) +
   theme_minimal()+
-  ylim(c(-9, 2))
-}
+  ylim(c(-90, 20))
 
-ratios<-dat.gwi$dat[dat.gwi$types=="albedo"]/dat.gwi$dat[dat.gwi$types=="carbon"]
+
+ratios<-dat.gwi$dat[dat.gwi$types=="albedo.gwi"]/dat.gwi$dat[dat.gwi$types=="carbon"]
 
 ratios.sum<-dat.gwi$dat[dat.gwi$types=="albedo"]/
- aggregate(dat.gwi$dat, by=list(dat.gwi$names), FUN='sum')$x[c(4,2,3,1)]
+ aggregate(dat.gwi$dat, by=list(dat.gwi$names), FUN='sum')$x[c(5,2,4,1,3)]
 
 #Second function to pull carbon fluxes by year (for variability)
 

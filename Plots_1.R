@@ -25,7 +25,7 @@ getcflux<-function(dat, yield, nodatyr, id){
   year<-as.numeric(format(dat$xlDateTime[endofyear], "%Y")[1:(length(endofyear))])
   lab<-rep(id, length(year))
   
-  return(cbind.data.frame(year, yearseq, lab))
+  return(cbind.data.frame(year, yearseq, lab, yield))
   
 }
 
@@ -35,10 +35,11 @@ misc.c.cflux<-getcflux(misc.c.merge, misc.c.yield, nodatyr=1, id="mgc")
 sorg.cflux<-getcflux(sorg.merge, sorg.yield, nodatyr=1, id="sorghum")
 maize.cflux<-getcflux(maize.merge, maize.yield, nodatyr=1, id="zmb")
 maize.c.cflux<-getcflux(maize.c.merge, maize.c.yield, nodatyr=1, id="zmc")
+np.cflux<-getcflux(nativeprairie, np.yield, nodatyr=0, id="prairie")
 
 
 
-fluxes<-rbind(switch.cflux,misc.cflux, sorg.cflux, maize.cflux, maize.c.cflux, misc.c.cflux)
+fluxes<-rbind(switch.cflux,misc.cflux, sorg.cflux, maize.cflux, maize.c.cflux, misc.c.cflux, np.cflux)
 fluxes.gm<-fluxes
 fluxes.gm$lab[which(!fluxes.gm$year%in%nosoy&fluxes.gm$lab%in%c('zmc','zmb', 'zm', 'sorghum'))]<-'gm'
 
@@ -51,13 +52,13 @@ fluxes.merge.gm$lab[which(!fluxes.merge.gm$year%in%nosoy&fluxes.merge.gm$lab%in%
 
 
 #color sets for unmerged sites, soy not separate
-colset.kitsin<-c("blue", "light blue", "forest green", "light pink",  "orange", "yellow")
-colset.og<-c("blue",  "light pink", "orange")
+colset.kitsin<-c("blue", "light blue", "plum3", "forest green", "light pink",  "orange", "yellow")
+colset.og<-c("blue",  "light pink", "plum3", "orange")
 colset.post<-c("blue", "light blue", "forest green",  "orange", "yellow")
 
 #color sets for unmerged sites, soy separate
-colset.kitsin.gm<-c("light green","blue", "light blue", "forest green", "light pink",  "orange", "yellow")
-colset.og.gm<-c("orange","light blue", "light green", "light pink")
+colset.kitsin.gm<-c("light green","blue", "light blue", "plum3","forest green", "light pink",  "orange", "yellow")
+colset.og.gm<-c("orange","light blue","plum3","light green", "light pink")
 colset.post.gm<-c("light green","blue", "light blue", "forest green",  "orange", "yellow")
 
 #color sets for merged sites, soy not separate
@@ -67,7 +68,7 @@ colset.merge.post<-c("light blue", "forest green",  "orange")
 
 
 #color sets for merged sites, soy separate
-colset.merge.gm<-c("orange","light blue", "forest green", "light green","light pink")
+colset.merge.gm<-c("orange","light blue", "plum3","forest green", "light green","light pink")
 colset.merge.og.gm<-colset.og.gm
 colset.merge.post.gm<-c("orange","light blue", "forest green", "light green")
 
@@ -265,6 +266,19 @@ sorgyr
 png('C:/Users/Bethany/Desktop/sorgyr.png', width=600, height=300)
 sorgyr
 dev.off()
+
+#Yields
+
+yield<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2022))) +
+  aes(x = lab, y = yield) +
+  geom_boxplot(shape = "circle", fill=colset.merge.gm)+
+  theme_minimal()+
+  labs(x = "Feedstock",
+       y = "Mg C ha-1 y-1")+
+  theme(axis.text=element_text(size=30),axis.title=element_text(size=32,face="bold"))
+
+yield
+
 
 
 #####
@@ -478,21 +492,20 @@ ggsave(filename='C:/Users/Bethany/Desktop/turbulent.png', device = 'png', units=
 # 
 # ggsave(filename='C:/Users/Bethany/Desktop/turbulent.png', device = 'png', units="in", width=16, height=7, plot=turb)
 # 
-# ggplot(all.eb, aes(fill=lab, y=val, x=month)) + 
+# ggplot(all.eb, aes(fill=lab, y=val, x=month)) +
 #   geom_bar(position="stack", stat="identity")+
 #   theme_minimal()+
 #   facet_grid(~id)+
 #   geom_point(aes(y=NR, group=lab), show.legend = FALSE)+
 #   scale_fill_manual(values=c("dark gray", "dark red","blue4"))
-#   
 # 
-# ggplot(all.eb, aes(fill=lab, y=val, x=id)) + 
+# 
+# ggplot(all.eb, aes(fill=lab, y=val, x=id)) +
 #   geom_bar(position="stack", stat="identity")+
 #   theme_minimal()+
 #   facet_grid(~month)+
 #   geom_point(aes(y=NR, group=lab), show.legend = FALSE)+
 #   scale_fill_manual(values=c("dark gray", "dark red","blue4"))
-
 
 ##Data availability
 
@@ -509,19 +522,20 @@ zmb<-data.frame(rep(4, length(years)), rep('orange', length(years)), years, rep 
 zmc<-data.frame(rep(3.5, length(years)), rep('yellow', length(years)), years, rep ("maize 2", length(years)))
 sw<-data.frame(rep(1.5, length(years)), rep('light pink', length(years)), years, rep ("switchgrass", length(years)))
 sb<-data.frame(rep(2, length(years)), rep('forest green', length(years)), years, rep ("sorghum", length(years)))
+np<-data.frame(rep(1, length(years)), rep('plum2', length(years)), years, rep ("native prairie", length(years)))
 
 
-colnames(zmc)<-colnames(mgc)<-colnames(mgb)<-colnames(sw)<-colnames(sb)<-colnames(zmb)<-c("y", "col", "yr", "feedstock")
+colnames(zmc)<-colnames(mgc)<-colnames(mgb)<-colnames(sw)<-colnames(sb)<-colnames(zmb)<-colnames(np)<-c("y", "col", "yr", "feedstock")
 
-zmc$y[!zmc$yr%in%p2]<-NA; mgc$y[!mgc$yr%in%p2]<-NA;sb$y[!zmc$yr%in%p2]<-NA; sw$y[!zmc$yr%in%p1]<-NA
+zmc$y[!zmc$yr%in%p2]<-NA; mgc$y[!mgc$yr%in%p2]<-NA;sb$y[!zmc$yr%in%p2]<-NA; sw$y[!zmc$yr%in%p1]<-NA;np$y[!zmc$yr%in%p1]<-NA
 
-test<-rbind(mgb, mgc, zmb, zmc,sw, sb)
+test<-rbind(mgb, mgc, zmb, zmc,sw, sb, np)
 
 
 avail<-ggplot(test) +
   aes(x = yr, y = y, fill = feedstock) +
   geom_tile(size = 1.5)+
-  scale_fill_manual(values=c("orange", "bisque","blue", "light blue", "forest green", "light pink")) +
+  scale_fill_manual(values=c("orange", "bisque","blue", "light blue", "plum3", "forest green", "light pink")) +
   theme_minimal()+
   scale_x_continuous(breaks = seq(from=2008, to=2022, by=2))+
   xlab("year")+

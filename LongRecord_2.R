@@ -80,6 +80,11 @@ switchgrass<-switchgrass.raw
 
 switchgrass.mgmt<-read_excel("Illinois Energy Farm Flux Towers Management Record.xlsx", sheet=6)
 switchgrass.mgmt<-switchgrass.mgmt[, c(1:13)]
+
+nativeprairie.raw<-read_excel("Prairie_2008_to_2016_L6.xlsx", sheet=2,skip=2)
+nativeprairie.raw[nativeprairie.raw==-9999]<-NA
+nativeprairie<-nativeprairie.raw
+
 #####
 
 ###Timestamp unpacker####
@@ -127,11 +132,14 @@ misc.c.yield.ustac<-as.numeric(miscanthus.c.mgmt[4,4:8]); misc.c.yield<-misc.c.y
 
 switch.yield.ustac<-as.numeric(switchgrass.mgmt[4,4:12]); switch.yield<-switch.yield.ustac*1.08 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .48tC / t miscanthus -> tC/ha
 
+np.yield.ustac<-c(0, 1.02, 2.73,1.51, 1.26, 2.49, 2.4, 2.19, 0); np.yield<-np.yield.ustac*1.08 
+
 sorg.yield.ustac<-as.numeric(sorghum.mgmt[4,4:7]); sorg.yield.ustac[2]<-(-9999) #placeholder for soy year
 sorg.yield<-sorg.yield.ustac*1.08 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .48tC / t sorghum -> tC/ha
 
 sorg.yield[2]<- as.numeric(sorghum.mgmt[3,5]) #bu/ac soy
 sorg.yield[2]<-sorg.yield[2]*0.028 #bushel conversion for soy
+
 
 #####
 
@@ -238,6 +246,25 @@ switch.hvst.sum<-cumsum(switch.hvst.30)
 plot(switch.hvst.sum~c(switchgrass$xlDateTime))
 
 
+
+#Native Priairie
+
+#Set up timeseries
+years<-unique(as.numeric(format(nativeprairie$xlDateTime, "%Y")))
+Y<-(as.numeric(format(nativeprairie$xlDateTime, "%Y")))
+endofyear<-c(match(years,Y )-1, length(Y))[2:10]
+
+#Unit conversions for carbon
+np.gpd<-c(nativeprairie$Fc)*0.0792 #gc02/pd. Add this directly for cum.
+np.gpd.tha<-np.gpd*.0027 #tC/ha/30min
+
+np.hvst<-np.gpd.tha
+np.hvst.30<-np.hvst
+np.yield[1]<-0.0001
+np.hvst.30[endofyear]<-np.hvst.30[endofyear]+np.yield# pretend there's a giant flux of C from harvest on the 31st of each year
+np.hvst.sum<-cumsum(np.hvst.30)
+plot(np.hvst.sum~c(nativeprairie$xlDateTime))
+
 #Sorghum
 
 #Set up timeseries
@@ -271,13 +298,15 @@ col.sb<-rep('forest green', length(Y));col.sb[which(Y%in%c(2010, 2013, 2016, 201
 Y<-(as.numeric(format(maize.c.merge$xlDateTime, "%Y")))
 col.zmc=rep('yellow', length(Y));col.zmc[which(Y%in%c(2010, 2013, 2016, 2019))]<-"light green"
 
+par(bty='n')
 #Plotting
-plot(maize.hvst.sum[samp]~maize.merge$xlDateTime[samp], ylim=c(-35,35), col=col.zm[samp], pch='.', ylab="Cumulative NEE, tC ha-1", xlab='', cex=2); 
+plot(maize.hvst.sum[samp]~maize.merge$xlDateTime[samp], ylim=c(-45,35), col=col.zm[samp], pch='.', ylab="Cumulative NEE, tC ha-1", xlab='', cex=2); 
 points(misc.hvst.sum[samp]~misc.merge$xlDateTime[samp], col='blue', pch='.', cex=2)
 points(switch.hvst.sum[samp]~c(switchgrass$xlDateTime)[samp], col='pink', pch='.', cex=2)
 points(sorg.hvst.sum[samp]~sorg.merge$xlDateTime[samp], col=col.sb[samp], pch='.', cex=2)
 points(misc.c.hvst.sum[samp]~misc.c.merge$xlDateTime[samp], col='light blue', pch='.', cex=2)
 points(maize.c.hvst.sum[samp]~maize.c.merge$xlDateTime[samp], col=col.zmc[samp], pch='.', cex=2)
+points(np.hvst.sum[samp]~nativeprairie$xlDateTime[samp], col="plum3" , pch='.', cex=2)
 
 zmc<-data.frame(cbind(unpack.time(maize.c.merge),maize.c.hvst.sum))
 zmb<-data.frame(cbind(unpack.time(maize.merge),maize.hvst.sum))
@@ -285,6 +314,7 @@ mgc<-data.frame(cbind(unpack.time(misc.c.merge),misc.c.hvst.sum))
 mgb<-data.frame(cbind(unpack.time(misc.merge),misc.hvst.sum))
 sb<-data.frame(cbind(unpack.time(sorg.merge),sorg.hvst.sum))
 sw<-data.frame(cbind(unpack.time(switchgrass),switch.hvst.sum))
+np<-data.frame(cbind(unpack.time(nativeprairie),np.hvst.sum))
 
 colnames(zmc)[9]<-colnames(zmb)[9]<-colnames(mgc)[9]<-colnames(mgb)[9]<-colnames(sb)[9]<-colnames(sw)[9]<-"cflux"
 
@@ -293,7 +323,7 @@ names(cumulatives)<-c('zmc', 'zmb', 'mgc', 'mgb', 'sb', 'sw')
 
 
 abline(h=0)
-legend(as.numeric(min(maize$xlDateTime)), 35, legend=c("maize", "soybean", "miscanthus", "switchgrass","sorghum"), col=c("orange","light green", "light blue", "pink", "forest green"), lwd=2, bty='n', cex=0.8)
+legend(as.numeric(min(maize$xlDateTime)), 35, legend=c("maize 1", "maize 2", "soybean", "miscanthus 1", "miscanthus 2", "native prairie", "switchgrass","sorghum"), col=c("orange","yellow","light green","blue", "light blue", "plum3", "pink", "forest green"), lwd=2, bty='n', cex=0.8, ncol=2)
 
-
+#harvest plot?
 
