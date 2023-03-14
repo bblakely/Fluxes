@@ -34,6 +34,13 @@ points(np.hvst.sum[samp]~decyr(nativeprairie$xlDateTime[samp]), col="plum3" , pc
 legend(as.numeric(min(decyr(maize$xlDateTime))), 40, legend=c("maize 1", "maize 2", "soybean", "miscanthus 1", "miscanthus 2", "native prairie", "switchgrass","sorghum"), col=c("orange","yellow","light green","blue", "light blue", "plum3", "pink", "forest green"), 
        lwd=2, bty='n', cex=1.1, ncol=2, text.font = 2, text.width=2, x.intersp = 0.3, y.intersp=0.7)
 
+
+dev.copy(png,'D:/R/Fluxes/Writeout/Plots/fig2_cflux_over_time.png', width=900, height=500)
+dev.off()
+
+
+
+
 #Boxplots
 getcflux<-function(dat, yield, nodatyr, id){
   
@@ -64,7 +71,7 @@ getcflux<-function(dat, yield, nodatyr, id){
 
 switch.cflux<-getcflux(switchgrass, switch.yield, nodatyr=0, id="switchgrass")
 misc.cflux<-getcflux(misc.merge, misc.yield, nodatyr=1, id="mgb")
-misc.c.cflux<-getcflux(misc.c.merge, misc.c.yield, nodatyr=1, id="mgc")
+misc.c.cflux<-getcflux(misc.c.merge, misc.c.yield, nodatyr=0, id="mgc") #was 1 before 2021 removal
 sorg.cflux<-getcflux(sorg.merge, sorg.yield, nodatyr=1, id="sorghum")
 maize.cflux<-getcflux(maize.merge, maize.yield, nodatyr=1, id="zmb")
 maize.c.cflux<-getcflux(maize.c.merge, maize.c.yield, nodatyr=1, id="zmc")
@@ -74,11 +81,10 @@ np.cflux<-getcflux(nativeprairie, np.yield, nodatyr=0, id="prairie")
 
 fluxes<-rbind(switch.cflux,misc.cflux, sorg.cflux, maize.cflux, maize.c.cflux, misc.c.cflux, np.cflux)
 fluxes.gm<-fluxes
-fluxes.gm$lab[which(!fluxes.gm$year%in%nosoy&fluxes.gm$lab%in%c('zmc','zmb', 'zm', 'sorghum'))]<-'gm'
+fluxes.gm$lab[which(!fluxes.gm$year%in%nosoy&fluxes.gm$lab%in%c('zmc','zmb', 'zm', 'sorghum'))]<-'soy'
 
-fluxes.gm$lab[fluxes.gm$lab=="zmc"]<-"maize 2";fluxes.gm$lab[fluxes.gm$lab=="zmb"]<-"maize 1"
-fluxes.gm$lab[fluxes.gm$lab=="mgc"]<-"misc. 2";fluxes.gm$lab[fluxes.gm$lab=="mgb"]<-"misc. 1"
-fluxes.gm$lab[fluxes.gm$lab=="gm"]<-"soy"
+fluxes.gm$lab[fluxes.gm$lab=="zmb"]<-"maize 1"; fluxes.gm$lab[fluxes.gm$lab=="zmc"]<-"maize 2"
+fluxes.gm$lab[fluxes.gm$lab=="mgb"]<-"misc. 1"; fluxes.gm$lab[fluxes.gm$lab=="mgc"]<-"misc. 2"
 
 
 
@@ -99,9 +105,8 @@ colset.post<-c("blue", "light blue", "forest green",  "orange", "yellow")
 colset.kitsin.gm<-c("light green","blue", "light blue", "plum3","forest green", "light pink",  "orange", "yellow")
 colset.og.gm<-c("orange","blue","plum3","light green", "light pink")
 colset.post.gm<-c("light green","blue", "light blue", "forest green",  "orange", "yellow")
-colset.post.gm.names<-c("orange","yellow", "blue", "light blue",  "forest green", "light green")
-  
-  
+colset.post.gm.labs<-c("orange", "yellow", "blue", "light blue", "forest green", "light green")
+
 #color sets for merged sites, soy not separate
 colset.merge<-c("light blue", "forest green", "light pink",  "orange")
 colset.merge.og<-colset.og
@@ -118,37 +123,39 @@ colset.merge.post.gm<-c("orange","light blue", "forest green", "light green")
 ##Collection 4: merged sites, soy separate####
 
 #the kitchen sink
-
+library(ggplot2)
 
 all<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2022))) +
   aes(x = lab, y = yearseq) +
   geom_boxplot(shape = "circle", fill=colset.merge.gm)+
+  geom_hline(yintercept=0)+
+  geom_label(label="2008 - 2022", x=5.8, y=4.5, size=10)+
   theme_minimal()+
-  labs(x = "Feedstock",
-       y = "Mg C ha-1 y-1")+
+  labs(y = "Mg C ha-1 y-1", x=NULL)+
   ylim(-5, 5)+
-  theme(axis.text=element_text(size=30),axis.title=element_text(size=32,face="bold"))
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
 
 all
 
-png('C:/Users/Bethany/Desktop/allcarb.png', width=900, height=630)
+png('D:/R/FLuxes/Writeout/Plots/fig3alt_combinedyr.png', width=900, height=500)
 all
 dev.off()
 
 
-#original three
+#original four
 og<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2016))) +
   aes(x = lab, y = yearseq) +
+  geom_hline(yintercept=0)+
   geom_boxplot(shape = "circle", fill = colset.merge.og.gm)+
   theme_minimal()+
-  labs(x = "Feedstock",
-       y = "Mg C ha-1 y-1")+
+  labs(y = "Mg C ha-1 y-1", x=NULL)+
   ylim(-5, 5)+
-  theme(axis.text=element_text(size=22),axis.title=element_text(size=24,face="bold"))
+  geom_label(label="2008 - 2016", x=4.8, y=4.5, size=10)+
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
 
   og
   
-  png('C:/Users/Bethany/Desktop/ogyr.png', width=600, height=300)
+  png('D:/R/FLuxes/Writeout/Plots/fig3a_ogyr.png', width=800, height=500)
   og
   dev.off()
   
@@ -164,38 +171,76 @@ og<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2016))) +
 #   ylim(-5, 5)
 
 
-#sorghum years
-sorgyr<-ggplot(subset(fluxes.gm, year%in%c(2018:2022))) +
+
+#Set post 2017
+newyr<-ggplot(subset(fluxes.gm, year%in%c(2018:2022))) +
   aes(x = lab, y = yearseq) +
-  geom_boxplot(shape = "circle", fill = colset.post.gm.names) +
+  geom_hline(yintercept=0)+
+  geom_boxplot(shape = "circle", fill = colset.post.gm.labs)+
   theme_minimal()+
-  labs(x = "Feedstock",
-       y = "Mg C ha-1 y-1")+
+  labs(y = "Mg C ha-1 y-1", x=NULL)+
   ylim(-5, 5)+
-  theme(axis.text=element_text(size=22),axis.title=element_text(size=24,face="bold"))
+  geom_label(label="2018 - 2022", x=5.8, y=4.5, size=10)+
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
 
 
-sorgyr
+newyr
 
-png('C:/Users/Bethany/Desktop/sorgyr.png', width=600, height=300)
-sorgyr
+png('D:/R/FLuxes/Writeout/Plots/fig3b_newyr.png', width=900, height=500)
+newyr
 dev.off()
+  
 
 #Yields
 
 yield<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2022))) +
   aes(x = lab, y = yield) +
-  geom_boxplot(shape = "circle", fill=colset.merge.gm)+
+  geom_boxplot(shape = "circle", color=colset.merge.gm, lwd=2)+
   theme_minimal()+
-  labs(x = "Feedstock",
-       y = "Mg C ha-1 y-1")+
-  theme(axis.text=element_text(size=30),axis.title=element_text(size=32,face="bold"))
+  labs(x = NULL, y = "Mg C ha-1 y-1")+
+  ylim(0,8)+
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
 
 yield
 
 
-png('C:/Users/Bethany/Desktop/yields.png', width=900, height=630)
-yield
+# png('D:/R/Fluxes/Writeout/Plots/fig3alt_combinedyield.png', width=900, height=500)
+# yield
+# dev.off()
+
+
+
+#original years
+ogyield<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2016))) +
+  aes(x = lab, y = yield) +
+  geom_boxplot(shape = "circle", color=colset.merge.og.gm, lwd=2)+
+  theme_minimal()+
+  labs(x = NULL, y = "Mg C ha-1 y-1")+
+  ylim(0,8)+
+  theme(axis.text=element_text(size=20),axis.title=element_text(size=30,face="bold"))
+
+ogyield
+
+png('D:/R/Fluxes/Writeout/Plots/fig3c_ogyield.png', width=800, height=500)
+ogyield
+dev.off()
+
+
+
+#later years
+newyield<-ggplot(subset(fluxes.gm, year%in%c(2018:2022))) +
+  aes(x = lab, y = yield) +
+  geom_boxplot(shape = "circle", color=colset.post.gm.labs, lwd=2)+
+  theme_minimal()+
+  labs(x = NULL, y = "Mg C ha-1 y-1")+
+  ylim(0,8)+
+  theme(axis.text=element_text(size=20),axis.title=element_text(size=30,face="bold"))
+
+newyield
+
+
+png('D:/R/Fluxes/Writeout/Plots/fig3d_newyield.png', width=900, height=500)
+newyield
 dev.off()
 
 #####
@@ -205,8 +250,11 @@ dev.off()
 ###Albedo###
 
 #Variability####
-albvar<-function(dat, id){
-  #dat<-subtime(dat)
+albvar<-function(dat, id, years=c(2008:2021)){
+  #subset to years of interest
+  yearvec<-as.numeric(format(dat$xlDateTime, "%Y"))
+  subset<-which(yearvec%in%years)
+  dat<-dat[subset,]
   dat.alb<-dat$Fsu/dat$Fsd; dat.alb[dat.alb<0|dat.alb>1|dat$Fsd<10]<-NA
   dat.month<-as.numeric(format(dat$xlDateTime, "%m"))
   dat.yr<-as.numeric(format(dat$xlDateTime, "%Y"))
@@ -232,11 +280,24 @@ mg.albvar<-merge(misc.albvar, misc.c.albvar, all=TRUE); mg.albvar$id<-"mg"
 
 
 all.albvar<-rbind(sorg.albvar, misc.albvar, misc.c.albvar, maize.albvar, maize.c.albvar, switch.albvar, np.albvar)
+
+all.albvar.p1<-rbind(misc.albvar, maize.albvar, switch.albvar, np.albvar)
+all.albvar.p1<-aggregate(data=all.albvar.p1, dat.alb~dat.month+dat.yr+id, FUN='mean')
+all.albvar.p1$dat.month<-as.factor(all.albvar.av.p1$dat.month)
+
+all.albvar.p2<-rbind(rbind(sorg.albvar, misc.albvar, misc.c.albvar, maize.albvar, maize.c.albvar))
+all.albvar.p2<-aggregate(data=all.albvar.p2, dat.alb~dat.month+dat.yr+id, FUN='mean')
+all.albvar.p2$dat.month<-as.factor(all.albvar.p2$dat.month)
+
 all.albvar.av<-rbind(sorg.albvar, mg.albvar, zm.albvar, switch.albvar, np.albvar)
 all.albvar.av<-aggregate(data=all.albvar.av, dat.alb~dat.month+dat.yr+id, FUN='mean')
 
 all.albvar$dat.month<-as.factor(all.albvar$dat.month)
 all.albvar.av$dat.month<-as.factor(all.albvar.av$dat.month)
+
+
+pal <- c("zm" = "yellow","zmc" = "yellow", "zmb" = "orange", "mg" = "light blue","mgc" = "light blue", 
+         "mgb" = "blue", "sw" = "light pink", "sb" = "forestgreen","gm" = "light green", "np"="plum3")
 
 
 library(ggplot2)
@@ -245,7 +306,7 @@ library(ggplot2)
 alb<-ggplot(all.albvar.av, aes(x=dat.month, y=dat.alb, fill=id),) + 
   geom_boxplot(outlier.size=0.1)+
   theme_minimal()+
-  scale_fill_manual(values=c("blue", "plum3", "forest green", "light pink", "orange"),labels=c('miscanthus',  'native prairie','sorghum', 'switchgrass','maize'))+
+  scale_fill_manual(values=pal)+#c("blue", "plum3", "forest green", "light pink", "orange"),labels=c('miscanthus',  'native prairie','sorghum', 'switchgrass','maize'))+
   ylab("albedo (unitless)")+
   xlab("month")+
   ylim(0.09, 0.6)+
@@ -253,7 +314,7 @@ alb<-ggplot(all.albvar.av, aes(x=dat.month, y=dat.alb, fill=id),) +
 
 alb
 
-png('C:/Users/Bethany/Desktop/albvar.png', width=1400, height=700)
+png('C:/Users/Bethany/Desktop/albvar.p2.png', width=1400, height=700)
 alb
 dev.off()
 
@@ -475,7 +536,7 @@ if(exists('maize.c.fh.sm')&exists('misc.c.fh.sm')){
 
 #LE#####
 
-leflux<-function(dat, window=1){
+leflux<-function(dat, window=1, years=c(2008:2021)){
   dat<-subtime(dat)
   dat.fe<-dat$Fe
   dat.doy<-as.numeric(format(dat$xlDateTime, "%m"))
@@ -541,8 +602,11 @@ if(exists('maize.c.fe.cum')&exists('misc.c.fe.cum')){
   
 #Variability in latent heat flux
 
-  levar<-function(dat, id){
+  levar<-function(dat, id, years=c(2008:2021)){
     #dat<-subtime(dat)
+    yearvec<-as.numeric(format(dat$xlDateTime, "%Y"))
+    subset<-which(yearvec%in%years)
+    dat<-dat[subset,]
     dat.le<-dat$Fe;#dat.le[dat.le<(-200)|dat.le>1000]<-NA
     dat.month<-as.numeric(format(dat$xlDateTime, "%m"))
     dat.yr<-as.numeric(format(dat$xlDateTime, "%Y"))
@@ -606,7 +670,7 @@ if(exists('maize.c.fe.cum')&exists('misc.c.fe.cum')){
            "mgb" = "blue", "sw" = "light pink", "sb" = "forestgreen","gm" = "light green", "np"="plum3")
   
   #All years
-  dat<-all.levar.rot
+  dat<-levar.pre
   
   le<-ggplot(dat, aes(x=dat.month, y=dat.le, fill=id),) + 
     geom_boxplot(outlier.size=0.1)+
@@ -619,22 +683,24 @@ if(exists('maize.c.fe.cum')&exists('misc.c.fe.cum')){
   
   le
   
-  png('C:/Users/Bethany/Desktop/levar.png', width=1200, height=600)
+  png('C:/Users/Bethany/Desktop/levar.p2.png', width=1200, height=600)
   le
   dev.off()
   
   #Panel: means as line graph
-  all.lines<-aggregate(all.levar.rot$dat.le, by=list(all.levar.rot$dat.month, all.levar.rot$id), FUN='mean')
+  all.lines<-aggregate(levar.post$dat.le, by=list(levar.post$dat.month, levar.post$id), FUN='mean')
   
   
-  png('C:/Users/Bethany/Desktop/letrace.png', width=500, height=400)  
+  png('C:/Users/Bethany/Desktop/letrace.p2.png', width=500, height=400)  
   
   par(mfrow=c(1,1), mar=c(4,4.2,2,1))
   
-  plot(all.lines$x[all.lines$Group.2=="mg"], type='l', col='blue', lwd=4, ylim=c(0, 130),
+  plot(all.lines$x[all.lines$Group.2=="mgb"], type='l', col='blue', lwd=4, ylim=c(0, 130),
        lty=5, ylab="Latent heat flux (W m-2)", xlab="Month",font.lab=2, cex.lab=1.5, cex.axis=2, cex.main=2)
   
-  lines(all.lines$x[all.lines$Group.2=="zm"], col='orange', lwd=4, lty=1)
+  lines(all.lines$x[all.lines$Group.2=="zmc"], col='yellow', lwd=4, lty=1)
+  lines(all.lines$x[all.lines$Group.2=="zmb"], col='orange', lwd=4, lty=1)
+  lines(all.lines$x[all.lines$Group.2=="mgc"], col='light blue', lwd=4, lty=5)
   lines(all.lines$x[all.lines$Group.2=="sw"], col='light pink', lwd=4, lty=5)
   lines(all.lines$x[all.lines$Group.2=="np"], col='plum3', lwd=4, lty=5)
   lines(all.lines$x[all.lines$Group.2=="sb"], col='forest green', lwd=4, lty=1)
@@ -663,7 +729,7 @@ if(exists('maize.c.fe.cum')&exists('misc.c.fe.cum')){
   #Cumulative LE
   plot(maize.fe.ccum, type='l', col='orange', xlab='month', ylab="cumulative latent heat", lwd=2.5, ylim=c(0, 12E+05))
   lines(sorg.fe.cum, col='forest green', lwd=2.5)
-  lines(misc.fe.ccum, col='blue', lwd=2.5)
+  lines(misc.fe.ccum, col='light blue', lwd=2.5)
   lines(switch.fe.cum, col='light pink', lwd=2.5)
   lines(np.fe.cum, col='plum3', lwd=2.5)
   

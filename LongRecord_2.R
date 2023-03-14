@@ -47,9 +47,9 @@ miscanthus.mgmt<-miscanthus.mgmt[, c(1:17)]
 
 #Read in Miscanthus Control
 miscanthus.c.raw<-read_excel("MiscanthusNoBasalt_2017_to_2019_L6.xlsx", sheet=2,skip=2) 
-miscanthus.c.raw.2020<-miscanthus.raw.2020# temp solution, uses MGB 2020-2021 read_excel("MiscanthusNoBasalt_2020_to_2021_L6.xls", sheet=2, skip=2)
+miscanthus.c.raw.2020<-read_excel("MiscanthusNoBasalt_2020_L6.xls", sheet=2, skip=2)#miscanthus.raw.2020# temp solution, uses MGB 2020-2021 read_excel("MiscanthusNoBasalt_2020_to_2021_L6.xls", sheet=2, skip=2)
 miscanthus.c.raw[miscanthus.c.raw==-9999]<-NA; miscanthus.c.raw.2020[miscanthus.c.raw.2020==-9999]<-NA
-miscanthus.c<-miscanthus.c.raw;miscanthus.c.2020<-miscanthus.raw.2020
+miscanthus.c<-miscanthus.c.raw;miscanthus.c.2020<-miscanthus.c.raw.2020
 
 misc.c.merge.mod<-miscanthus.c.2020; colnames(misc.c.merge.mod)[colnames(misc.c.merge.mod)=="Fco2"]<-"Fc"
 misc.c.merge<-merge(miscanthus.c, misc.c.merge.mod, all=TRUE)
@@ -81,6 +81,7 @@ switchgrass<-switchgrass.raw
 switchgrass.mgmt<-read_excel("Illinois Energy Farm Flux Towers Management Record.xlsx", sheet=6)
 switchgrass.mgmt<-switchgrass.mgmt[, c(1:13)]
 
+#Read in prairie
 nativeprairie.raw<-read_excel("Prairie_2008_to_2016_L6.xlsx", sheet=2,skip=2)
 nativeprairie.raw[nativeprairie.raw==-9999]<-NA
 nativeprairie<-nativeprairie.raw
@@ -104,23 +105,6 @@ unpack.time<-function(dat){
   return(ts.dat)
 }
 
-#####
-
-#get shared-year datasets####
-
-subyr<-function(dat, year=2017){
-  
-  dat.sh<-dat[which(as.numeric(format(dat$xlDateTime, "%Y"))>year),]
-  return(dat.sh)
-  
-}
-
-sorghum1<-subyr(sorg.merge)
-maize1<-subyr(maize.merge); maize.c1<-subyr(maize.c.merge)
-miscanthus1<-subyr(misc.merge); miscanthus.c1<-subyr(misc.c.merge)
-#no shared years of switchgrass
-
-#####
 
 
 #Unit conversions for yields####
@@ -129,6 +113,8 @@ maize.c.yield.buac<-as.numeric(maize.c.mgmt[3,4:8]); maize.c.yield<-maize.c.yiel
 
 misc.yield.ustac<-as.numeric(miscanthus.mgmt[4,4:17]); misc.yield<-misc.yield.ustac*1.08 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .48tC / t miscanthus -> tC/ha
 misc.c.yield.ustac<-as.numeric(miscanthus.c.mgmt[4,4:8]); misc.c.yield<-misc.c.yield.ustac*1.08 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .48tC / t miscanthus -> tC/ha
+misc.c.yield<-misc.c.yield[1:(length(misc.c.yield)-1)]#Remove 2021 yield for now; 2021 flux data is bad
+
 
 switch.yield.ustac<-as.numeric(switchgrass.mgmt[4,4:12]); switch.yield<-switch.yield.ustac*1.08 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .48tC / t miscanthus -> tC/ha
 
@@ -212,7 +198,7 @@ plot(misc.hvst.sum~misc.merge$xlDateTime)
 #Set up timeseries
 years<-unique(as.numeric(format(misc.c.merge$xlDateTime, "%Y")))
 Y<-(as.numeric(format(misc.c.merge$xlDateTime, "%Y")))
-endofyear<-c(match(years,Y )-1, length(Y))[2:6]
+endofyear<-c(match(years,Y )-1, length(Y))[2:5] #[2:6]
 
 #Unit conversions for carbon
 misc.c.gpd<-misc.c.merge$Fc*0.0792 #gc02/pd. Add this directly for cum.
@@ -222,7 +208,7 @@ misc.c.gpd.tha<-misc.c.gpd*.0027 #tC/ha/30min
 misc.c.hvst<-misc.c.gpd.tha
 misc.c.hvst.30<-misc.c.hvst
 misc.c.yield[1]<-0.0001
-misc.c.hvst.30[endofyear]<-misc.c.hvst.30[endofyear]+misc.c.yield# pretend there's a giant flux of C from harvest on the 31st of each year
+misc.c.hvst.30[endofyear]<-misc.c.hvst.30[endofyear]+misc.c.yield
 misc.c.hvst.sum<-cumsum(misc.c.hvst.30)
 plot(misc.c.hvst.sum~misc.c.merge$xlDateTime)
 
@@ -325,5 +311,5 @@ names(cumulatives)<-c('zmc', 'zmb', 'mgc', 'mgb', 'sb', 'sw')
 abline(h=0)
 legend(as.numeric(min(maize$xlDateTime)), 35, legend=c("maize 1", "maize 2", "soybean", "miscanthus 1", "miscanthus 2", "native prairie", "switchgrass","sorghum"), col=c("orange","yellow","light green","blue", "light blue", "plum3", "pink", "forest green"), lwd=2, bty='n', cex=0.8, ncol=2)
 
-#harvest plot?
+
 

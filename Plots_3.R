@@ -1,10 +1,12 @@
-#Figures for ESA poster.
-#Run energy fluxes (for now)
+#Figures for Manuscript
+if(!exists("sorg.fg.sm")){source(EnergyFluxes_2.1)} 
+#Most stuff from  energy fluxes has been ported over here
+#Should figure out how to remove from pipeline eventually
 
-#Carbon fluxes####
+#Carbon fluxes, incl. cumulative plot####
 
 #squiggle plot (requires "long record" be run)
-par(bty='n' )
+par(bty='n', mfrow=c(1,1))
 
 decyr<-function(date){
   yr<-as.numeric(format(date, "%Y"))
@@ -34,7 +36,14 @@ points(np.hvst.sum[samp]~decyr(nativeprairie$xlDateTime[samp]), col="plum3" , pc
 legend(as.numeric(min(decyr(maize$xlDateTime))), 40, legend=c("maize 1", "maize 2", "soybean", "miscanthus 1", "miscanthus 2", "native prairie", "switchgrass","sorghum"), col=c("orange","yellow","light green","blue", "light blue", "plum3", "pink", "forest green"), 
        lwd=2, bty='n', cex=1.1, ncol=2, text.font = 2, text.width=2, x.intersp = 0.3, y.intersp=0.7)
 
-#Boxplots
+
+dev.copy(png,'D:/R/Fluxes/Writeout/Plots/fig2_cflux_over_time.png', width=900, height=500)
+dev.off()
+
+
+
+
+#Set up Boxplots
 getcflux<-function(dat, yield, nodatyr, id){
   
   #Unit conversions to tC/ha
@@ -64,7 +73,7 @@ getcflux<-function(dat, yield, nodatyr, id){
 
 switch.cflux<-getcflux(switchgrass, switch.yield, nodatyr=0, id="switchgrass")
 misc.cflux<-getcflux(misc.merge, misc.yield, nodatyr=1, id="mgb")
-misc.c.cflux<-getcflux(misc.c.merge, misc.c.yield, nodatyr=1, id="mgc")
+misc.c.cflux<-getcflux(misc.c.merge, misc.c.yield, nodatyr=0, id="mgc") #was 1 before 2021 removal
 sorg.cflux<-getcflux(sorg.merge, sorg.yield, nodatyr=1, id="sorghum")
 maize.cflux<-getcflux(maize.merge, maize.yield, nodatyr=1, id="zmb")
 maize.c.cflux<-getcflux(maize.c.merge, maize.c.yield, nodatyr=1, id="zmc")
@@ -74,11 +83,10 @@ np.cflux<-getcflux(nativeprairie, np.yield, nodatyr=0, id="prairie")
 
 fluxes<-rbind(switch.cflux,misc.cflux, sorg.cflux, maize.cflux, maize.c.cflux, misc.c.cflux, np.cflux)
 fluxes.gm<-fluxes
-fluxes.gm$lab[which(!fluxes.gm$year%in%nosoy&fluxes.gm$lab%in%c('zmc','zmb', 'zm', 'sorghum'))]<-'gm'
+fluxes.gm$lab[which(!fluxes.gm$year%in%nosoy&fluxes.gm$lab%in%c('zmc','zmb', 'zm', 'sorghum'))]<-'soy'
 
-fluxes.gm$lab[fluxes.gm$lab=="zmc"]<-"maize 2";fluxes.gm$lab[fluxes.gm$lab=="zmb"]<-"maize 1"
-fluxes.gm$lab[fluxes.gm$lab=="mgc"]<-"misc. 2";fluxes.gm$lab[fluxes.gm$lab=="mgb"]<-"misc. 1"
-fluxes.gm$lab[fluxes.gm$lab=="gm"]<-"soy"
+fluxes.gm$lab[fluxes.gm$lab=="zmb"]<-"maize 1"; fluxes.gm$lab[fluxes.gm$lab=="zmc"]<-"maize 2"
+fluxes.gm$lab[fluxes.gm$lab=="mgb"]<-"misc. 1"; fluxes.gm$lab[fluxes.gm$lab=="mgc"]<-"misc. 2"
 
 
 
@@ -99,9 +107,8 @@ colset.post<-c("blue", "light blue", "forest green",  "orange", "yellow")
 colset.kitsin.gm<-c("light green","blue", "light blue", "plum3","forest green", "light pink",  "orange", "yellow")
 colset.og.gm<-c("orange","blue","plum3","light green", "light pink")
 colset.post.gm<-c("light green","blue", "light blue", "forest green",  "orange", "yellow")
-colset.post.gm.names<-c("orange","yellow", "blue", "light blue",  "forest green", "light green")
-  
-  
+colset.post.gm.labs<-c("orange", "yellow", "blue", "light blue", "forest green", "light green")
+
 #color sets for merged sites, soy not separate
 colset.merge<-c("light blue", "forest green", "light pink",  "orange")
 colset.merge.og<-colset.og
@@ -113,100 +120,133 @@ colset.merge.gm<-c("orange","blue", "plum3","forest green", "light green","light
 colset.merge.og.gm<-colset.og.gm
 colset.merge.post.gm<-c("orange","light blue", "forest green", "light green")
 
+#####
 
-#Collections 1-3 can be found in plots_1, likely archived
-##Collection 4: merged sites, soy separate####
+##Carbon flux plots####
 
 #the kitchen sink
-
+library(ggplot2)
 
 all<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2022))) +
   aes(x = lab, y = yearseq) +
   geom_boxplot(shape = "circle", fill=colset.merge.gm)+
+  geom_hline(yintercept=0)+
+  geom_label(label="2008 - 2022", x=5.8, y=4.5, size=10)+
   theme_minimal()+
-  labs(x = "Feedstock",
-       y = "Mg C ha-1 y-1")+
+  labs(y = "Mg C ha-1 y-1", x=NULL)+
   ylim(-5, 5)+
-  theme(axis.text=element_text(size=30),axis.title=element_text(size=32,face="bold"))
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
 
 all
 
-png('C:/Users/Bethany/Desktop/allcarb.png', width=900, height=630)
+png('D:/R/FLuxes/Writeout/Plots/fig3alt_combinedyr.png', width=900, height=500)
 all
 dev.off()
 
 
-#original three
+#original four
 og<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2016))) +
   aes(x = lab, y = yearseq) +
+  geom_hline(yintercept=0)+
   geom_boxplot(shape = "circle", fill = colset.merge.og.gm)+
   theme_minimal()+
-  labs(x = "Feedstock",
-       y = "Mg C ha-1 y-1")+
+  labs(y = "Mg C ha-1 y-1", x=NULL)+
   ylim(-5, 5)+
-  theme(axis.text=element_text(size=22),axis.title=element_text(size=24,face="bold"))
+  geom_label(label="2008 - 2016", x=4.8, y=4.5, size=10)+
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
 
   og
   
-  png('C:/Users/Bethany/Desktop/ogyr.png', width=600, height=300)
+  png('D:/R/FLuxes/Writeout/Plots/fig3a_ogyr.png', width=700, height=500)
   og
   dev.off()
-  
-
-# 
-# #original three, no burp
-# ggplot(subset(fluxes.merge.gm, year%in%c(2008:2012, 2015:2016))) +
-#   aes(x = lab, y = yearseq) +
-#   geom_boxplot(shape = "circle", fill = colset.merge.og.gm) +
-#   theme_minimal()+
-#   labs(x = "Feedstock",
-#        y = "Mg C ha-1 y-1")+
-#   ylim(-5, 5)
 
 
-#sorghum years
-sorgyr<-ggplot(subset(fluxes.gm, year%in%c(2018:2022))) +
+#Set post 2017
+newyr<-ggplot(subset(fluxes.gm, year%in%c(2018:2022))) +
   aes(x = lab, y = yearseq) +
-  geom_boxplot(shape = "circle", fill = colset.post.gm.names) +
+  geom_hline(yintercept=0)+
+  geom_boxplot(shape = "circle", fill = colset.post.gm.labs)+
   theme_minimal()+
-  labs(x = "Feedstock",
-       y = "Mg C ha-1 y-1")+
+  labs(y = "Mg C ha-1 y-1", x=NULL)+
   ylim(-5, 5)+
-  theme(axis.text=element_text(size=22),axis.title=element_text(size=24,face="bold"))
+  geom_label(label="2018 - 2022", x=5.8, y=4.5, size=10)+
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
 
 
-sorgyr
+newyr
 
-png('C:/Users/Bethany/Desktop/sorgyr.png', width=600, height=300)
-sorgyr
+png('D:/R/FLuxes/Writeout/Plots/fig3b_newyr.png', width=800, height=500)
+newyr
 dev.off()
+#####  
 
-#Yields
+#Yields####
 
 yield<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2022))) +
   aes(x = lab, y = yield) +
-  geom_boxplot(shape = "circle", fill=colset.merge.gm)+
+  geom_hline(yintercept=0)+
+  geom_boxplot(shape = "circle", color=colset.merge.gm, lwd=2)+
   theme_minimal()+
-  labs(x = "Feedstock",
-       y = "Mg C ha-1 y-1")+
-  theme(axis.text=element_text(size=30),axis.title=element_text(size=32,face="bold"))
+  labs(x = NULL, y = "Mg C ha-1 y-1")+
+  ylim(0,8)+
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
 
 yield
 
 
-png('C:/Users/Bethany/Desktop/yields.png', width=900, height=630)
-yield
+# png('D:/R/Fluxes/Writeout/Plots/fig3alt_combinedyield.png', width=900, height=500)
+# yield
+# dev.off()
+
+
+
+#original years
+ogyield<-ggplot(subset(fluxes.merge.gm, year%in%c(2008:2016))) +
+  aes(x = lab, y = yield) +
+  geom_hline(yintercept=0)+
+  geom_boxplot(shape = "circle", color=colset.merge.og.gm, lwd=2)+
+  theme_minimal()+
+  labs(x = NULL, y = "Mg C ha-1 y-1")+
+  ylim(0,8)+
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
+
+ogyield
+
+png('D:/R/Fluxes/Writeout/Plots/fig3c_ogyield.png', width=700, height=500)
+ogyield
+dev.off()
+
+
+
+#later years
+newyield<-ggplot(subset(fluxes.gm, year%in%c(2018:2022))) +
+  aes(x = lab, y = yield) +
+  geom_hline(yintercept=0)+
+  geom_boxplot(shape = "circle", color=colset.post.gm.labs, lwd=2)+
+  theme_minimal()+
+  labs(x = NULL, y = "Mg C ha-1 y-1")+
+  ylim(0,8)+
+  theme(axis.text=element_text(size=24),axis.title=element_text(size=30,face="bold"))
+
+newyield
+
+
+png('D:/R/Fluxes/Writeout/Plots/fig3d_newyield.png', width=800, height=500)
+newyield
 dev.off()
 
 #####
-#####
 
 
-###Albedo###
+###Albedo####
 
-#Variability####
-albvar<-function(dat, id){
-  #dat<-subtime(dat)
+#Albedo Variability#
+albvar<-function(dat, id, years=c(2008:2021)){
+  #subset to years of interest
+  yearvec<-as.numeric(format(dat$xlDateTime, "%Y"))
+  subset<-which(yearvec%in%years)
+  dat<-dat[subset,]
   dat.alb<-dat$Fsu/dat$Fsd; dat.alb[dat.alb<0|dat.alb>1|dat$Fsd<10]<-NA
   dat.month<-as.numeric(format(dat$xlDateTime, "%m"))
   dat.yr<-as.numeric(format(dat$xlDateTime, "%Y"))
@@ -232,105 +272,260 @@ mg.albvar<-merge(misc.albvar, misc.c.albvar, all=TRUE); mg.albvar$id<-"mg"
 
 
 all.albvar<-rbind(sorg.albvar, misc.albvar, misc.c.albvar, maize.albvar, maize.c.albvar, switch.albvar, np.albvar)
+
+all.albvar.p1<-rbind(misc.albvar, maize.albvar, switch.albvar, np.albvar)
+all.albvar.p1<-aggregate(data=all.albvar.p1, dat.alb~dat.month+dat.yr+id, FUN='mean')
+all.albvar.p1$dat.month<-as.factor(all.albvar.p1$dat.month)
+
+all.albvar.p2<-rbind(rbind(sorg.albvar, misc.albvar, misc.c.albvar, maize.albvar, maize.c.albvar))
+all.albvar.p2<-aggregate(data=all.albvar.p2, dat.alb~dat.month+dat.yr+id, FUN='mean')
+all.albvar.p2$dat.month<-as.factor(all.albvar.p2$dat.month)
+
 all.albvar.av<-rbind(sorg.albvar, mg.albvar, zm.albvar, switch.albvar, np.albvar)
 all.albvar.av<-aggregate(data=all.albvar.av, dat.alb~dat.month+dat.yr+id, FUN='mean')
 
 all.albvar$dat.month<-as.factor(all.albvar$dat.month)
 all.albvar.av$dat.month<-as.factor(all.albvar.av$dat.month)
+#####
 
+###Albedo plots ####
 
-library(ggplot2)
+pal.full <- c("zm" = "yellow","zmc" = "yellow", "zmb" = "orange", "mg" = "blue","mgc" = "light blue", 
+         "mgb" = "blue", "sw" = "light pink", "sb" = "forestgreen","gm" = "light green", "np"="plum3")
+pal<-c("zmc" = "yellow", "zmb" = "orange","mgc" = "light blue", "mgb" = "blue", "sw" = "light pink", "sb" = "forestgreen", "np"="plum3")
 
+labs<-c("zmc"="maize 2", "zmb" = "maize 1", "mgb" = "misc. 1", "mgc" = "misc. 2", "sb"="sorghum", "np" = "praire", "sw" = "switchgrass")
 
-alb<-ggplot(all.albvar.av, aes(x=dat.month, y=dat.alb, fill=id),) + 
+ogalb<-ggplot(all.albvar.p1, aes(x=dat.month, y=dat.alb, fill=id),) + 
   geom_boxplot(outlier.size=0.1)+
   theme_minimal()+
-  scale_fill_manual(values=c("blue", "plum3", "forest green", "light pink", "orange"),labels=c('miscanthus',  'native prairie','sorghum', 'switchgrass','maize'))+
+  scale_fill_manual(values=pal, labels=labs)+#c("blue", "plum3", "forest green", "light pink", "orange"),labels=c('miscanthus',  'native prairie','sorghum', 'switchgrass','maize'))+
   ylab("albedo (unitless)")+
   xlab("month")+
   ylim(0.09, 0.6)+
+  geom_label(label="2008 - 2016", x=11, y=0.55, size=11, show.legend = FALSE, inherit.aes = FALSE)+
   theme(axis.text=element_text(size=30),axis.title=element_text(size=32,face="bold"),legend.text=element_text(size=24), legend.title = element_blank())
 
-alb
+ogalb
 
-png('C:/Users/Bethany/Desktop/albvar.png', width=1400, height=700)
-alb
+png('D:/R/Fluxes/Writeout/Plots/fig4a_ogalb.png', width=1400, height=700)
+ogalb
+dev.off()
+
+
+newalb<-ggplot(all.albvar.p2, aes(x=dat.month, y=dat.alb, fill=id),) + 
+  geom_boxplot(outlier.size=0.1)+
+  theme_minimal()+
+  scale_fill_manual(values=pal, labels=labs)+#c("blue", "plum3", "forest green", "light pink", "orange"),labels=c('miscanthus',  'native prairie','sorghum', 'switchgrass','maize'))+
+  ylab("albedo (unitless)")+
+  xlab("month")+
+  ylim(0.09, 0.6)+
+  geom_label(label="2018 - 2022", x=11, y=0.55, size=11, show.legend = FALSE, inherit.aes = FALSE)+
+  theme(axis.text=element_text(size=30),axis.title=element_text(size=32,face="bold"),legend.text=element_text(size=24), legend.title = element_blank())
+newalb
+
+png('D:/R/Fluxes/Writeout/Plots/fig4b_newalb.png', width=1400, height=700)
+newalb
 dev.off()
 
 #####
 
-#Radiative forcing####
-albify<-function(dat, window=1){
-  dat<-subtime(dat)
+#Radiative forcing from Albedo####
+
+#New radiative forcing, adjusted from from GWI; calcualtes TOA RF#
+
+#1) daily albedo
+albify<-function(dat, window=1, adj=FALSE, years=c(2008:2022)){
+  dat<-subtime(dat, subset=years)
   dat.alb<-dat$Fsu/dat$Fsd; dat.alb[dat.alb<0|dat.alb>1|dat$Fsd<10]<-NA
-  dat.doy<-as.numeric(format(dat$xlDateTime, "%m"))
+  
+  adj.ind<-which(as.numeric(format(sorg.merge$xlDateTime, "%m"))%in%c(3,4,5,6,11,12))
+  dat.alb.adj<-dat.alb; dat.alb.adj[adj.ind]<-dat.alb[adj.ind]+0.08
+  
+  dat.doy<-as.numeric(format(dat$xlDateTime, "%j"))
   dat.d.alb<-aggregate(dat.alb, by=list(dat.doy), FUN='mean', na.rm=TRUE)
+  
+  if(adj==TRUE){
+    dat.d.alb<-aggregate(dat.alb.adj, by=list(dat.doy), FUN='mean', na.rm=TRUE)
+  }
+  
   dat.alb.sm<-rollapply(dat.d.alb$x, width=window, fill=NA, na.rm=TRUE, FUN='mean', partial=TRUE)
   
   return(dat.alb.sm)
 }
 
 
+#Calculate ALL albedos
+sorg.alb<-albify(sorg.merge, adj=TRUE) #adj=TRUE adjusts sorghum albedo by 8% during the bare soil season
 
-sorg.alb.sm<-albify(sorg.merge)
-maize.alb.sm<-albify(maize.merge);maize.c.alb.sm<-albify(maize.c.merge)
-misc.alb.sm<-albify(misc.merge);misc.c.alb.sm<-albify(misc.c.merge)
-switch.alb.sm<-albify(switchgrass)
-np.alb.sm<-albify(nativeprairie)
+maize.alb<-albify(maize.merge);maize.c.alb<-albify(maize.c.merge)
+maize.og.alb<-albify(maize.merge, years=c(2008:2016)); maize.new.alb<-albify(maize.merge, years=c(2018:2022))
+
+misc.alb<-albify(misc.merge);misc.c.alb<-albify(misc.c.merge)
+misc.og.alb<-albify(misc.merge, years=c(2008:2016)); misc.new.alb<-albify(misc.merge, years=c(2018:2022))
 
 
-#aggregate plant types
-if(exists('maize.c.alb.sm')&exists('misc.c.alb.sm')){
-  misc.alb<-(misc.alb.sm+misc.c.alb.sm)/2
-  maize.alb<-(maize.alb.sm+maize.c.alb.sm)/2
-}else{
-  misc.alb<-misc.alb.sm
-  maize.alb<-maize.alb.sm
+switch.alb<-albify(switchgrass)
+np.alb<-albify(nativeprairie)
+
+#Get RF set up: TOA solar
+toa.dat.raw<-read.csv("Us-UiB_HH_2008_2016.csv")
+unpack.time.af<-function(dat){
+  dat.ts<-dat$TIMESTAMP_START
+  ts<-strptime(dat.ts, "%Y%m%d%H%M", tz="")
+  YEAR<-as.numeric(format(ts, '%Y'))
+  DECDOY<-as.numeric(format(ts, '%j'))+(as.numeric(format(ts, '%H'))/24)+(as.numeric(format(ts, '%M'))/1440)
+  DOY<-as.numeric(format(ts, '%j'))
+  MONTH<-as.numeric(format(ts, '%m'))
+  DAY<-as.numeric(format(ts, '%d'))
+  HOUR<-as.numeric(format(ts, '%H'))
+  DECHR<-as.numeric(format(ts, '%H'))+as.numeric(format(ts, '%M'))/60
+  DECYEAR<-YEAR+(DECDOY/366)
+  ts.dat<-data.frame(cbind(YEAR,DECDOY,DECYEAR, MONTH, DAY, DOY,DECHR,HOUR))
+  
+  return(ts.dat)
 }
 
-#Adjust for darker soil?
-#plot(maize.alb-sorg.alb.sm) #maize is ~0.06 brighter when the ground is bare
-sorg.alb.soil<-sorg.alb.sm+c(0,0,0.06, 0.06, 0.06, 0.06,0,0,0,0,0.06,0.06)
+toa.ts.raw<-unpack.time.af(toa.dat.raw)
+toa<-aggregate(toa.dat.raw$SW_IN_POT, by=list(toa.ts.raw$DOY), FUN='mean')$x
 
-
-#Radiative forcing (modified from energyfluxes)
-
-monthrad<-aggregate(maize.merge$Fsd, by=list(as.numeric(format(maize.merge$xlDateTime, "%m"))), FUN='mean', na.rm=TRUE)
-
-albdiff.mg<-maize.alb-misc.alb #"for conversion from corn to miscanthus"
-rf.mg<-monthrad$x*albdiff.mg; rf.ann.mg<-mean(rf.mg)
-
-albdiff.sb<-maize.alb-sorg.alb.sm #for conversion from corn to sorgum
-rf.sb<-monthrad$x*albdiff.sb; rf.ann.sb<-mean(rf.sb)
-
-albdiff.sw<-maize.alb-switch.alb.sm #for conversion from corn to sorgum
-rf.sw<-monthrad$x*albdiff.sw; rf.ann.sw<-mean(rf.sw)
+#Get RF set up: transmittance / transmittance adjusted solar
+rfparam<-function(dat, years=c(2008:2022)){
+  dat<-subtime(dat, subset=years)
+  dat.swin<-aggregate(dat$Fsd, by=list(format(dat$xlDateTime, "%j")), FUN='mean')$x
+  dat.trans<-dat.swin/toa
+  rfscl<-dat.swin*dat.trans
   
-albdiff.np<-maize.alb-np.alb.sm #for conversion from corn to native prairie
-rf.np<-monthrad$x*albdiff.np; rf.ann.np<-mean(rf.np)
+  rfdat<-data.frame(cbind(dat.swin,dat.trans, rfscl)); colnames(rfdat)<-c("swin", "trans", "scalar")
+  
+  return(rfscl) #change to rfdat if you want the pieces individually
+  
+}
 
 
-png('C:/Users/Bethany/Desktop/albrf.png', width=680, height=340)    
+
+#Calculate ALL RFs
+
+#Merged
+#maize to sorghum,all
+sbrf<-rfparam(sorg.merge)*(maize.alb-sorg.alb); 
+#maize to miscanthus, all
+mgrf<-rfparam(misc.merge)*(maize.alb-misc.alb)
+#maize to switchgrass, all
+swrf<-rfparam(switchgrass)*(maize.alb-switch.alb)
+#maize to prairie, all
+nprf<-rfparam(nativeprairie)*(maize.alb-np.alb)
+
+#Orignal years
+#maize to miscanthus, og
+mgrf.og<-rfparam(misc.merge, years=c(2008:2016))*(maize.og.alb-misc.og.alb)
+#maize to switchgrass, og
+swrf.og<-rfparam(switchgrass, years=c(2008:2016))*(maize.og.alb-switch.alb)
+#maize to prairie, og
+nprf.og<-rfparam(nativeprairie, years=c(2008:2016))*(maize.og.alb-np.alb)
+
+#New years
+#maize to other maize, new
+zmrf.new<-rfparam(maize.c.merge, years=c(2018:2022))*(maize.new.alb-maize.c.alb)
+#maize to misc 1, new
+mgbrf.new<-rfparam(misc.merge, years=c(2018:2022))*(maize.new.alb-misc.new.alb)
+#maize to misc 2, new
+mgcrf.new<-rfparam(misc.c.merge, years=c(2018:2022))*(maize.new.alb-misc.c.alb)
+#maize to sorghum, new
+sbrf.new<-rfparam(sorg.merge, years=c(2018:2022))*(maize.new.alb-sorg.alb)
+#####
+
+#Radiative Forcing Plots#####
+
+#Weirdly difficult setup to aggregate a DOY vector to months:#
+
+#mode fucntion so that a DOY is assigned to the month it most commonly lands in (necessary b/c leap years change doy-month pairings slightly )
+mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+#creates a doy-length vector of months (e.g. "1" 31 times for DOY 1-31) for use in aggregating RF's
+doytomonth<-function (dat){
+  dat.ts<-unpack.time(dat)
+  key<-aggregate(dat.ts, by=list(dat.ts$DOY), FUN="mode")$MONTH
+  return(key)
+}
+
+
+##Plots
+
+#Merged
+sbrf.month<-aggregate(sbrf, by=list(doytomonth(sorg.merge)), FUN='mean')$x
+mgrf.month<-aggregate(mgrf, by=list(doytomonth(misc.merge)), FUN='mean')$x
+swrf.month<-aggregate(swrf, by=list(doytomonth(switchgrass)), FUN='mean')$x
+nprf.month<-aggregate(nprf, by=list(doytomonth(nativeprairie)), FUN='mean')$x
+
+
+#png('C:/Users/Bethany/Desktop/albrf.png', width=680, height=340)    
 
 par(mfrow=c(1,1), mar=c(4,4.2,2,1))
 
-plot(rf.mg, type='l', main="RF of Conversion from Maize", font.lab=2, lwd=4, ylab='raditive forcing (Wm-2)', xlab='month', ylim=c(-18, 18), col='blue', cex.lab=1.5, cex.axis=1.5, cex.main=2)
-lines(rf.sb, type='l',  lwd=4, col='forest green') 
-lines(rf.sw,lwd=4,col='light pink')
-lines(rf.np, lwd=4, col='plum3')
+plot(mgrf.month, type='l', main="RF of Conversion from Maize", font.lab=2, lwd=4, ylab='raditive forcing (Wm-2)', xlab='month', ylim=c(-10, 10), col='blue', cex.lab=1.5, cex.axis=1.5, cex.main=2)
+lines(sbrf.month, type='l',  lwd=4, col='forest green') 
+lines(swrf.month,lwd=4,col='light pink')
+lines(nprf.month, lwd=4, col='plum3')
 abline(h=0, lwd=4, lty=3)
 
-legend(7, 19, 
-       legend=c(paste("Miscanthus:", round(rf.ann.mg, 2), "Wm-2"), paste("Switchgrass:", round(rf.ann.sw,2), "Wm-2"), paste("Native Prairie:", round(rf.ann.np, 2), "Wm-2"), paste("Sorghum:", round(rf.ann.sb, 2), "Wm-2")), 
-       lwd=2, col=c("light blue", "light pink","plum3", "forest green"), bty='n', cex=1, text.font=2)
+legend(7, 11, 
+       legend=c(paste("Miscanthus:", round(mean(mgrf, na.rm=TRUE), 2), "Wm-2"), paste("Switchgrass:", round(mean(swrf, na.rm=TRUE), 2), "Wm-2"), paste("Native Prairie:", round(mean(nprf, na.rm=TRUE), 2), "Wm-2"), paste("Sorghum:", round(mean(sbrf, na.rm=TRUE), 2), "Wm-2")), 
+       lwd=2, col=c("blue", "light pink","plum3", "forest green"), bty='n', cex=1, text.font=2)
 
+
+#dev.off()
+
+
+#Original years
+
+#Merged
+mgrf.og.month<-aggregate(mgrf.og, by=list(doytomonth(misc.merge)), FUN='mean')$x
+swrf.og.month<-aggregate(swrf.og, by=list(doytomonth(switchgrass)), FUN='mean')$x
+nprf.og.month<-aggregate(nprf.og, by=list(doytomonth(nativeprairie)), FUN='mean')$x
+
+png('D:/R/Fluxes/Writeout/Plots/fig4a_pan_ogrf.png', width=500, height=350)   
+
+plot(mgrf.og.month, type='l', main="RF of Conversion from Maize", font.lab=2, lwd=4, ylab='radiative forcing (Wm-2)', xlab='month', ylim=c(-10, 10), col='blue', cex.lab=1.5, cex.axis=1.5, cex.main=2)
+lines(swrf.og.month,lwd=4,col='light pink')
+lines(nprf.og.month, lwd=4, col='plum3')
+abline(h=0, lwd=4, lty=3)
+
+legend(7, 11, 
+       legend=c(paste("Miscanthus:", round(mean(mgrf.og, na.rm=TRUE), 2), "Wm-2"), paste("Switchgrass:", round(mean(swrf.og, na.rm=TRUE), 2), "Wm-2"), paste("Native Prairie:", round(mean(nprf.og, na.rm=TRUE), 2), "Wm-2")), 
+       lwd=2, col=c("blue", "light pink","plum3"), bty='n', cex=1, text.font=2)
 
 dev.off()
 
+#Newer years
+
+zmrf.new.month<-aggregate(zmrf.new, by=list(doytomonth(maize.merge)), FUN='mean')$x
+mgbrf.new.month<-aggregate(mgbrf.new, by=list(doytomonth(misc.merge)), FUN='mean')$x
+mgcrf.new.month<-aggregate(mgcrf.new, by=list(doytomonth(misc.c.merge)), FUN='mean')$x
+sbrf.new.month<-aggregate(sbrf.new, by=list(doytomonth(sorg.merge)), FUN='mean')$x
+
+png('D:/R/Fluxes/Writeout/Plots/fig4b_pan_newrf.png', width=500, height=350)   
+
+plot(mgbrf.new.month, type='l', main="RF of Conversion from Maize", font.lab=2, lwd=4, ylab='raditive forcing (Wm-2)', xlab='month', ylim=c(-10, 10), col='blue', cex.lab=1.5, cex.axis=1.5, cex.main=2)
+lines(mgcrf.new.month,lwd=4,col='light blue')
+lines(sbrf.new.month, lwd=4, col='forest green')
+lines(zmrf.new.month, lwd=4, col='yellow', lty=2)
+abline(h=0, lwd=4, lty=3)
+
+#Consider using average of zm as baseline and plotting both
+
+legend(7, 11, 
+       legend=c(paste("Miscanthus 1:", round(mean(mgbrf.new, na.rm=TRUE), 2), "Wm-2"), paste("Miscanthus 2:", round(mean(mgcrf.new, na.rm=TRUE), 2), "Wm-2"), paste("Sorghum:", round(mean(sbrf.new, na.rm=TRUE), 2), "Wm-2"), paste("Maize 2:", round(mean(zmrf.new, na.rm=TRUE), 2), "Wm-2")), 
+       lwd=2, col=c("blue", "light blue","forest green", "yellow"), bty='n', cex=1, text.font=2)
+
+dev.off()
 #####
 
 
-###Turbulent Fluxes###
+###Turbulent Fluxes####
 
 # H #####
 
@@ -429,10 +624,10 @@ if(exists('maize.c.fh.sm')&exists('misc.c.fh.sm')){
   
   #Plots
   
-  #Shared color palette
-  pal <- c("zm" = "orange","zmc" = "yellow", "zmb" = "orange", "mg" = "blue","mgc" = "light blue", 
-           "mgb" = "blue", "sw" = "light pink", "sb" = "forestgreen","gm" = "light green", "np"="plum3")
-  
+  #Shared color palette and labels can be found in albedo section
+  # pal <- c("zm" = "orange","zmc" = "yellow", "zmb" = "orange", "mg" = "blue","mgc" = "light blue", 
+  #          "mgb" = "blue", "sw" = "light pink", "sb" = "forestgreen","gm" = "light green", "np"="plum3")
+  # 
   #All years
   dat<-all.hvar.rot
   
@@ -475,7 +670,7 @@ if(exists('maize.c.fh.sm')&exists('misc.c.fh.sm')){
 
 #LE#####
 
-leflux<-function(dat, window=1){
+leflux<-function(dat, window=1, years=c(2008:2022)){
   dat<-subtime(dat)
   dat.fe<-dat$Fe
   dat.doy<-as.numeric(format(dat$xlDateTime, "%m"))
@@ -541,8 +736,11 @@ if(exists('maize.c.fe.cum')&exists('misc.c.fe.cum')){
   
 #Variability in latent heat flux
 
-  levar<-function(dat, id){
+  levar<-function(dat, id, years=c(2008:2021)){
     #dat<-subtime(dat)
+    yearvec<-as.numeric(format(dat$xlDateTime, "%Y"))
+    subset<-which(yearvec%in%years)
+    dat<-dat[subset,]
     dat.le<-dat$Fe;#dat.le[dat.le<(-200)|dat.le>1000]<-NA
     dat.month<-as.numeric(format(dat$xlDateTime, "%m"))
     dat.yr<-as.numeric(format(dat$xlDateTime, "%Y"))
@@ -599,42 +797,85 @@ if(exists('maize.c.fe.cum')&exists('misc.c.fe.cum')){
   levar.pre.fs.soy<-levar.pre.fs;levar.pre.fs$id[!levar.pre.fs$dat.yr%in%nosoy&levar.pre.fs$id%in%c("zm")]<-"gm" #identify soy years
   
   
-  #Plots
+###LE Plots#####
   
-  #Shared color palette
-  pal <- c("zm" = "orange","zmc" = "yellow", "zmb" = "orange", "mg" = "blue","mgc" = "light blue", 
-           "mgb" = "blue", "sw" = "light pink", "sb" = "forestgreen","gm" = "light green", "np"="plum3")
+  #Shared color palette and labeling can be found in albedo section
+  # pal <- c("zm" = "orange","zmc" = "yellow", "zmb" = "orange", "mg" = "blue","mgc" = "light blue", 
+  #          "mgb" = "blue", "sw" = "light pink", "sb" = "forestgreen","gm" = "light green", "np"="plum3")
+  # 
   
-  #All years
-  dat<-all.levar.rot
   
-  le<-ggplot(dat, aes(x=dat.month, y=dat.le, fill=id),) + 
+  #OG years
+  dat<-levar.pre
+  
+  ogle<-ggplot(dat, aes(x=dat.month, y=dat.le, fill=id),) + 
     geom_boxplot(outlier.size=0.1)+
     theme_minimal()+
-    scale_fill_manual(values=pal)+
+    scale_fill_manual(values=pal, labels=labs)+
     ylim(min=-5, max=200)+
-    ylab("LE (W m-1)")+
+    ylab("LE (W m-2)")+
     xlab("month")+
     theme(axis.text=element_text(size=30),axis.title=element_text(size=32,face="bold"),legend.text=element_text(size=24), legend.title = element_blank())
   
-  le
+  ogle
   
-  png('C:/Users/Bethany/Desktop/levar.png', width=1200, height=600)
-  le
+  png('D:/R/FLuxes/Writeout/Plots/fig6a_le_ogyr.png', width=1400, height=700)
+  ogle
   dev.off()
   
   #Panel: means as line graph
-  all.lines<-aggregate(all.levar.rot$dat.le, by=list(all.levar.rot$dat.month, all.levar.rot$id), FUN='mean')
+  all.lines<-aggregate(levar.pre$dat.le, by=list(levar.pre$dat.month, levar.pre$id), FUN='mean')
   
   
-  png('C:/Users/Bethany/Desktop/letrace.png', width=500, height=400)  
+  png('D:/R/FLuxes/Writeout/Plots/fig6a_pan_le_ogyr.png', width=500, height=400)  
   
   par(mfrow=c(1,1), mar=c(4,4.2,2,1))
   
-  plot(all.lines$x[all.lines$Group.2=="mg"], type='l', col='blue', lwd=4, ylim=c(0, 130),
+  plot(all.lines$x[all.lines$Group.2=="mgb"], type='l', col='blue', lwd=4, ylim=c(0, 130),
        lty=5, ylab="Latent heat flux (W m-2)", xlab="Month",font.lab=2, cex.lab=1.5, cex.axis=2, cex.main=2)
   
-  lines(all.lines$x[all.lines$Group.2=="zm"], col='orange', lwd=4, lty=1)
+  lines(all.lines$x[all.lines$Group.2=="zmc"], col='yellow', lwd=4, lty=1)
+  lines(all.lines$x[all.lines$Group.2=="zmb"], col='orange', lwd=4, lty=1)
+  lines(all.lines$x[all.lines$Group.2=="mgc"], col='light blue', lwd=4, lty=5)
+  lines(all.lines$x[all.lines$Group.2=="sw"], col='light pink', lwd=4, lty=5)
+  lines(all.lines$x[all.lines$Group.2=="np"], col='plum3', lwd=4, lty=5)
+  lines(all.lines$x[all.lines$Group.2=="sb"], col='forest green', lwd=4, lty=1)
+  
+  dev.off()
+  
+#New years
+  
+  dat<-levar.post
+  
+  newle<-ggplot(dat, aes(x=dat.month, y=dat.le, fill=id),) + 
+    geom_boxplot(outlier.size=0.1)+
+    theme_minimal()+
+    scale_fill_manual(values=pal, labels=labs)+
+    ylim(min=-5, max=200)+
+    ylab("LE (W m-2)")+
+    xlab("month")+
+    theme(axis.text=element_text(size=30),axis.title=element_text(size=32,face="bold"),legend.text=element_text(size=24), legend.title = element_blank())
+  
+  newle
+  
+  png('D:/R/FLuxes/Writeout/Plots/fig6b_le_newyr.png', width=1400, height=700)
+  newle
+  dev.off()
+  
+  #Panel: means as line graph
+  all.lines<-aggregate(levar.post$dat.le, by=list(levar.post$dat.month, levar.post$id), FUN='mean')
+  
+  
+  png('D:/R/FLuxes/Writeout/Plots/fig6b_pan_le_newyr.png', width=500, height=400)  
+  
+  par(mfrow=c(1,1), mar=c(4,4.2,2,1))
+  
+  plot(all.lines$x[all.lines$Group.2=="mgb"], type='l', col='blue', lwd=4, ylim=c(0, 130),
+       lty=5, ylab="Latent heat flux (W m-2)", xlab="Month",font.lab=2, cex.lab=1.5, cex.axis=2, cex.main=2)
+  
+  lines(all.lines$x[all.lines$Group.2=="zmc"], col='yellow', lwd=4, lty=1)
+  lines(all.lines$x[all.lines$Group.2=="zmb"], col='orange', lwd=4, lty=1)
+  lines(all.lines$x[all.lines$Group.2=="mgc"], col='light blue', lwd=4, lty=5)
   lines(all.lines$x[all.lines$Group.2=="sw"], col='light pink', lwd=4, lty=5)
   lines(all.lines$x[all.lines$Group.2=="np"], col='plum3', lwd=4, lty=5)
   lines(all.lines$x[all.lines$Group.2=="sb"], col='forest green', lwd=4, lty=1)
@@ -663,7 +904,7 @@ if(exists('maize.c.fe.cum')&exists('misc.c.fe.cum')){
   #Cumulative LE
   plot(maize.fe.ccum, type='l', col='orange', xlab='month', ylab="cumulative latent heat", lwd=2.5, ylim=c(0, 12E+05))
   lines(sorg.fe.cum, col='forest green', lwd=2.5)
-  lines(misc.fe.ccum, col='blue', lwd=2.5)
+  lines(misc.fe.ccum, col='light blue', lwd=2.5)
   lines(switch.fe.cum, col='light pink', lwd=2.5)
   lines(np.fe.cum, col='plum3', lwd=2.5)
   
@@ -764,7 +1005,6 @@ if(exists('maize.c.fe.cum')&exists('misc.c.fe.cum')){
   
   
   #####
-  
 
 ##Data availability#####
 
@@ -788,18 +1028,18 @@ colnames(zmc)<-colnames(mgc)<-colnames(mgb)<-colnames(sw)<-colnames(sb)<-colname
 
 zmc$y[!zmc$yr%in%p2]<-NA; mgc$y[!mgc$yr%in%p2]<-NA;sb$y[!zmc$yr%in%p2]<-NA; sw$y[!zmc$yr%in%p1]<-NA;np$y[!zmc$yr%in%p1]<-NA
 
-test<-rbind(mgb, mgc, zmb, zmc,sw, sb, np)
+coverage<-rbind(mgb, mgc, zmb, zmc,sw, sb, np)
 
 
-avail<-ggplot(test) +
+avail<-ggplot(coverage) +
   aes(x = yr, y = y, fill = feedstock) +
   geom_tile(size = 1.5)+
-  scale_fill_manual(values=c("orange", "bisque","blue", "light blue", "plum3", "forest green", "light pink")) +
+  scale_fill_manual(values=c("orange", "yellow","blue", "light blue", "plum3", "forest green", "light pink")) +
   theme_minimal()+
   scale_x_continuous(breaks = seq(from=2008, to=2022, by=2))+
-  xlab("year")+
-  theme(legend.text=element_text(size=18),axis.text.y=element_blank(),
-        axis.ticks.y=element_blank(),axis.text=element_text(size=30),
+  xlab("")+
+  theme(legend.text=element_text(size=22),axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),axis.text=element_text(size=24),
         axis.title=element_text(size=26,face="bold"), axis.title.y = element_blank(),
         legend.title=element_blank(), panel.grid.minor.x = element_line(color = "black"),
         panel.grid.major.x = element_line(color = "black"))
@@ -807,14 +1047,12 @@ avail<-ggplot(test) +
 
 avail
 
-png('C:/Users/Bethany/Desktop/avail.png', width=1500, height=500)
+png("D:/R/Fluxes/Writeout/Plots/fig1_availability.png", width=1000, height=500)
 avail
 dev.off()
 
 
-
-
-
+#####
 
 ##GWI####
 
