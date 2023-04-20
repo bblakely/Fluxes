@@ -43,7 +43,7 @@ albify<-function(dat, window=1, adj=FALSE){
   dat<-subtime(dat)
   dat.alb<-dat$Fsu/dat$Fsd; dat.alb[dat.alb<0|dat.alb>1|dat$Fsd<10]<-NA
   
-  adj.ind<-which(as.numeric(format(sorg.merge$xlDateTime, "%m"))%in%c(3,4,5,11,12))
+  adj.ind<-which(as.numeric(format(sorg.merge$xlDateTime, "%m"))%in%c(3,4,5,6,11,12))
   dat.alb.adj<-dat.alb; dat.alb.adj[adj.ind]<-dat.alb[adj.ind]+0.08
   
   dat.doy<-as.numeric(format(dat$xlDateTime, "%j"))
@@ -139,7 +139,7 @@ calcgwi<-function(dat, yield, rf, nodatyr=3){
 RFtoa<-mean(rf) #annual mean radiative forcing
 
 #Constants####
-yco2<-50 #airborne co2, estimating half here (can probably do better)
+yco2<-45 #airborne co2, estimating 45% here, from (can probably do better)
 
 A<-1 #perturbed area, m2
 Ae<-5.1E14 #earth's surface area, m2

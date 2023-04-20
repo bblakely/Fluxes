@@ -5,6 +5,9 @@ library(bigleaf)
 
 ###Read in data####
 
+dir<-getwd()
+setwd("Fluxdata")
+
 #Read in Maize Basalt
 maize.raw<-read_excel("Maize_2008_to_2019_L6.xlsx", sheet=2,skip=2) #Maize basalt all the way through; no basalt before 2017
 maize.raw.2020<-read_excel("Maize_2020_to_2021_L6.xls", sheet=2, skip=2)#read_excel("MaizeCon_2020_L6.xls", sheet=2, skip=2) #Maize control 2020
@@ -85,6 +88,8 @@ switchgrass.mgmt<-switchgrass.mgmt[, c(1:13)]
 nativeprairie.raw<-read_excel("Prairie_2008_to_2016_L6.xlsx", sheet=2,skip=2)
 nativeprairie.raw[nativeprairie.raw==-9999]<-NA
 nativeprairie<-nativeprairie.raw
+
+setwd(dir)
 
 #####
 
