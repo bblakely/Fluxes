@@ -1,7 +1,7 @@
 
 #EnergyFluxes
 
-if (!exists("sorg.hvst.sum")){source("LongRecord_2.R")}
+if (!exists("sorg.hvst.sum")){source("LongRecord_2.1.R")}
 
 library(zoo)
 #Cleanup; prevents objects from previous runs from showing up erroneously in the plots

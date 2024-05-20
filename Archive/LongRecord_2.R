@@ -3,6 +3,8 @@
 library(readxl)
 library(bigleaf)
 
+harvest.version<-"endofyear" #set to "endofyear' for harvest out at the end of the year, "harvestdate" for harvest out on the harvest date.
+
 ###Read in data####
 
 dir<-getwd()
@@ -139,18 +141,35 @@ sorg.yield[2]<-sorg.yield[2]*0.028 #bushel conversion for soy
 par(mfrow=c(1,1))
 
 #Maize-basalt
+if(harvest.version=="original"){
 years<-unique(as.numeric(format(maize.merge$xlDateTime, "%Y")))
 Y<-(as.numeric(format(maize.merge$xlDateTime, "%Y")))
 #endofyear is the location of last record of each year
 #match finds the first record of each year so by subtracting one you get the last record of the previous year
 #and by appending the length ( == final index) you get the last value for the last year
 endofyear<-c(match(years,Y )-1, length(Y))[2:15]
+}
+
+#New version: harvest comes out on harvest date
+if(harvest.version=="harvestdate"){
+harvest.ts <- as.POSIXct(as.numeric(maize.mgmt[6,4:17]) * (60*60*24), origin="1899-12-30", tz="GMT")
+harvest.date.na<-as.numeric(format(harvest.ts, '%j'));harvest.date<-harvest.date.na
+harvest.date[is.na(harvest.date.na)]<-round(mean(harvest.date.na[!is.na(harvest.date.na)]),0)
+harvest.year<-round(as.numeric(names(maize.mgmt[6,4:17]), 0))
+
+ts.dat<-unpack.time(maize.merge)
+ts.harvest<-data.frame(cbind(harvest.year, harvest.date))
+
+endofyear<-rep(NA, nrow(ts.harvest))
+for(i in 1:nrow(ts.harvest)){
+  endofyear[i]<-max(which(ts.dat$YEAR==ts.harvest$harvest.year[i]& ts.dat$DOY==ts.harvest$harvest.date[i]))
+}
+}
+
 
 
 maize.gpd<-maize.merge$Fc*0.0792 #gc02/pd. Add this directly for cum.
-#plot(cumsum(maize.gpd[Y==2010])); #lines(cumsum(maize.nep[Y==2008]/48), col='red')
 maize.gpd.tha<-maize.gpd*.0027 #tC/ha/30min
-#plot(-cumsum(maize.merge.gpd.tha[Y==2011]))
 
 
 maize.hvst<-maize.gpd.tha
@@ -163,9 +182,26 @@ plot(maize.hvst.sum~maize.merge$xlDateTime)
 #Maize-control
 
 #Set up Timeseries
+if(harvest.version=="endofyear"){
 years<-unique(as.numeric(format(maize.c.merge$xlDateTime, "%Y")))
 Y<-(as.numeric(format(maize.c.merge$xlDateTime, "%Y")))
 endofyear<-c(match(years,Y )-1, length(Y))[2:6]
+}
+
+if(harvest.version=="harvestdate"){
+  harvest.ts <- as.POSIXct(as.numeric(maize.c.mgmt[6,4:ncol(maize.c.mgmt)]) * (60*60*24), origin="1899-12-30", tz="GMT")
+  harvest.date.na<-as.numeric(format(harvest.ts, '%j'));harvest.date<-harvest.date.na
+  harvest.date[is.na(harvest.date.na)]<-round(mean(harvest.date.na[!is.na(harvest.date.na)]),0)
+  harvest.year<-round(as.numeric(names(maize.c.mgmt[6,4:ncol(maize.c.mgmt)]), 0))
+  
+  ts.dat<-unpack.time(maize.c.merge)
+  ts.harvest<-data.frame(cbind(harvest.year, harvest.date))
+  
+  endofyear<-rep(NA, nrow(ts.harvest))
+  for(i in 1:nrow(ts.harvest)){
+    endofyear[i]<-max(which(ts.dat$YEAR==ts.harvest$harvest.year[i]& ts.dat$DOY==ts.harvest$harvest.date[i]))
+  }
+}
 
 #Unit conversions for carbon
 maize.c.gpd<-maize.c.merge$Fc*0.0792 #gc02/pd. Add this directly for cum.
@@ -182,9 +218,25 @@ plot(maize.c.hvst.sum~maize.c.merge$xlDateTime)
 #Miscanthus-basalt
 
 #Set up timeseries
+
+if(harvest.version=="endofyear"){
 years<-unique(as.numeric(format(misc.merge$xlDateTime, "%Y")))
 Y<-(as.numeric(format(misc.merge$xlDateTime, "%Y")))
 endofyear<-c(match(years,Y )-1, length(Y))[2:15]
+}
+
+if(harvest.version=="harvestdate"){
+  harvest.ts <- as.POSIXct(as.numeric(misc.mgmt[6,4:17]) * (60*60*24), origin="1899-12-30")
+  harvest.date.na<-as.numeric(format(harvest.ts, '%j'));harvest.date[is.na(harvest.date.na)]<-round(mean(harvest.date.na[!is.na(harvest.date.na)]),0)
+  harvest.year<-round(as.numeric(names(misc.mgmt[6,4:17]), 0))
+  
+  ts.dat<-unpack.time(misc.merge)
+  ts.harvest<-data.frame(cbind(harvest.year, harvest.date))
+  
+  for(i in 1:nrow(ts.harvest)){
+    endofyear[i]<-max(which(ts.dat$YEAR==ts.harvest$harvest.year[i]& ts.dat$DOY==ts.harvest$harvest.date[i]))
+  }
+}
 
 #Unit conversions for carbon
 misc.gpd<-misc.merge$Fc*0.0792 #gc02/pd. Add this directly for cum.
@@ -201,9 +253,24 @@ plot(misc.hvst.sum~misc.merge$xlDateTime)
 #Miscanthus-control
 
 #Set up timeseries
+if(harvest.version=="endofyear"){
 years<-unique(as.numeric(format(misc.c.merge$xlDateTime, "%Y")))
 Y<-(as.numeric(format(misc.c.merge$xlDateTime, "%Y")))
 endofyear<-c(match(years,Y )-1, length(Y))[2:5] #[2:6]
+}
+
+if(harvest.version=="harvestdate"){
+  harvest.ts <- as.POSIXct(as.numeric(misc.c.mgmt[6,4:17]) * (60*60*24), origin="1899-12-30")
+  harvest.date.na<-as.numeric(format(harvest.ts, '%j'));harvest.date[is.na(harvest.date.na)]<-round(mean(harvest.date.na[!is.na(harvest.date.na)]),0)
+  harvest.year<-round(as.numeric(names(misc.c.mgmt[6,4:17]), 0))
+  
+  ts.dat<-unpack.time(misc.c.merge)
+  ts.harvest<-data.frame(cbind(harvest.year, harvest.date))
+  
+  for(i in 1:nrow(ts.harvest)){
+    endofyear[i]<-max(which(ts.dat$YEAR==ts.harvest$harvest.year[i]& ts.dat$DOY==ts.harvest$harvest.date[i]))
+  }
+}
 
 #Unit conversions for carbon
 misc.c.gpd<-misc.c.merge$Fc*0.0792 #gc02/pd. Add this directly for cum.
@@ -221,9 +288,26 @@ plot(misc.c.hvst.sum~misc.c.merge$xlDateTime)
 #Switchgrass
 
 #Set up timeseries
+
+if(harvest.version=="endofyear"){
 years<-unique(as.numeric(format(switchgrass$xlDateTime, "%Y")))
 Y<-(as.numeric(format(switchgrass$xlDateTime, "%Y")))
 endofyear<-c(match(years,Y )-1, length(Y))[2:10]
+}
+
+
+if(harvest.version=="harvestdate"){
+  harvest.ts <- as.POSIXct(as.numeric(switchgrass.mgmt[6,4:17]) * (60*60*24), origin="1899-12-30")
+  harvest.date.na<-as.numeric(format(harvest.ts, '%j'));harvest.date[is.na(harvest.date.na)]<-round(mean(harvest.date.na[!is.na(harvest.date.na)]),0)
+  harvest.year<-round(as.numeric(names(switchgrass.mgmt[6,4:17]), 0))
+  
+  ts.dat<-unpack.time(switchgrass)
+  ts.harvest<-data.frame(cbind(harvest.year, harvest.date))
+  
+  for(i in 1:nrow(ts.harvest)){
+    endofyear[i]<-max(which(ts.dat$YEAR==ts.harvest$harvest.year[i]& ts.dat$DOY==ts.harvest$harvest.date[i]))
+  }
+}
 
 #Unit conversions for carbon
 switch.gpd<-c(switchgrass$Fc)*0.0792 #gc02/pd. Add this directly for cum.
@@ -241,9 +325,24 @@ plot(switch.hvst.sum~c(switchgrass$xlDateTime))
 #Native Priairie
 
 #Set up timeseries
+if(harvest.version=="endofyear"){
 years<-unique(as.numeric(format(nativeprairie$xlDateTime, "%Y")))
 Y<-(as.numeric(format(nativeprairie$xlDateTime, "%Y")))
 endofyear<-c(match(years,Y )-1, length(Y))[2:10]
+}
+
+if(harvest.version=="harvestdate"){
+  harvest.ts <- as.POSIXct(as.numeric(nativeprairie.mgmt[6,4:17]) * (60*60*24), origin="1899-12-30")
+  harvest.date.na<-as.numeric(format(harvest.ts, '%j'));harvest.date[is.na(harvest.date.na)]<-round(mean(harvest.date.na[!is.na(harvest.date.na)]),0)
+  harvest.year<-round(as.numeric(names(nativeprairie.mgmt[6,4:17]), 0))
+  
+  ts.dat<-unpack.time(nativeprairie)
+  ts.harvest<-data.frame(cbind(harvest.year, harvest.date))
+  
+  for(i in 1:nrow(ts.harvest)){
+    endofyear[i]<-max(which(ts.dat$YEAR==ts.harvest$harvest.year[i]& ts.dat$DOY==ts.harvest$harvest.date[i]))
+  }
+}
 
 #Unit conversions for carbon
 np.gpd<-c(nativeprairie$Fc)*0.0792 #gc02/pd. Add this directly for cum.
@@ -259,9 +358,24 @@ plot(np.hvst.sum~c(nativeprairie$xlDateTime))
 #Sorghum
 
 #Set up timeseries
+if(harvest.version=="endofyear"){
 years<-unique(as.numeric(format(sorg.merge$xlDateTime, "%Y")))
 Y<-(as.numeric(format(sorg.merge$xlDateTime, "%Y")))
 endofyear<-c(match(years,Y )-1, length(Y))[2:5]
+}
+
+if(harvest.version=="harvestdate"){
+  harvest.ts <- as.POSIXct(as.numeric(sorg.mgmt[6,4:17]) * (60*60*24), origin="1899-12-30")
+  harvest.date.na<-as.numeric(format(harvest.ts, '%j'));harvest.date[is.na(harvest.date.na)]<-round(mean(harvest.date.na[!is.na(harvest.date.na)]),0)
+  harvest.year<-round(as.numeric(names(sorg.mgmt[6,4:17]), 0))
+  
+  ts.dat<-unpack.time(sorg.merge)
+  ts.harvest<-data.frame(cbind(harvest.year, harvest.date))
+  
+  for(i in 1:nrow(ts.harvest)){
+    endofyear[i]<-max(which(ts.dat$YEAR==ts.harvest$harvest.year[i]& ts.dat$DOY==ts.harvest$harvest.date[i]))
+  }
+}
 
 #Unit conversions for carbon
 sorg.gpd<-sorg.merge$Fc*0.0792 #gc02/pd. Add this directly for cum.
