@@ -1,8 +1,17 @@
-#Uncertainty analysis?
+#Uncertainty analysis
 
+
+#Update at revision time: maize, misc, and sorghum have all had custom filtered Fc made.
+#create a fake custom filtered Fc, that is just the PFP-generated filtered FC, for prairie and switchgrass:
+switchgrass$Fc_filtered_cust<-switchgrass$Fc_filtered
+nativeprairie$Fc_filtered_cust<-nativeprairie$Fc_filtered
+
+
+#Begin algorithm
 allsites<-list(maize.merge, maize.c.merge, misc.merge, misc.c.merge, switchgrass, nativeprairie, sorg.merge)
 sitenames<-c("maize.merge", "maize.c.merge", "misc.merge", "misc.c.merge", "switchgrass", "nativeprairie", "sorg.merge")
 names(allsites)<-sitenames
+
 
 allerr<-list()
 
@@ -12,7 +21,7 @@ print(paste("starting site", names(allsites)[s]))
 
 dat<-allsites[[s]]
 dat.ts<-unpack.time(dat)
-years<-unique(dat.ts$YEAR); years<-years[years<2020]
+years<-unique(dat.ts$YEAR); #years<-years[years<2020]
 
 
 #let's do a little simulation
@@ -36,7 +45,10 @@ year<-years[y]
 dat.yr<-dat[dat.ts$YEAR==year,]
 
 #Model error section ###
-dat.yr$Fc_filtered<-dat.yr$Fc_filtered*conv; dat.yr$Fc<-dat.yr$Fc*conv
+
+dat.yr$Fc_filtered<-dat.yr$Fc_filtered_cust*conv; dat.yr$Fc<-dat.yr$Fc*conv
+
+#dat.yr$Fc_filtered<-dat.yr$Fc_filtered*conv; dat.yr$Fc<-dat.yr$Fc*conv #old version with no custom filtered Fc
 #plot(dat.yr$Fc_filtered~dat.yr$xlDateTime, ylim=c(-0.01,0.01))
 
 result<-rep(NA, 1000)
@@ -49,7 +61,9 @@ if(i%%100==0){print(i)} #readout to follow loop
 #find 1000 records that have obs
 goodind<-which(!is.na(dat.yr$Fc_filtered))
 
+if(length(goodind)>=1000){
 sub.ind<-sample(goodind, 1000)
+}else{sub.ind<-sample(goodind, 500)}
 
 sub<-dat.yr[sub.ind,]
 
@@ -57,12 +71,16 @@ sub<-dat.yr[sub.ind,]
 
 
 #remove x% of them and fill with model data where x is prop data missing
-miss<-length(!goodind)/(nrow(dat.yr)) 
+#miss<-length(!goodind)/(nrow(dat.yr))
+miss<-length(which(is.na(dat.yr$Fc_filtered)))/nrow(dat.yr)
 #in this case 33%
 
-kill.ind<-sample(1:1000, round(miss*1000))
-fc.dat<-sub$Fc_filtered
-fc.mod<-sub$Fc_filtered; fc.mod[kill.ind]<-sub$Fc_SOLO[kill.ind]*conv
+if(length(goodind)>=1000){kill.ind<-sample(1:1000, round(miss*1000))}else{kill.ind<-sample(1:500, round(miss*500))}
+  
+#fc.dat<-sub$Fc_filtered
+fc.dat<-sub$Fcbk #fcbk is actual measured Fc
+#fc.mod<-sub$Fc_filtered;
+fc.mod<-sub$Fcbk; fc.mod[kill.ind]<-((sub$NEE_SOLO[kill.ind]*conv)+(sub$NEE_LT[kill.ind]*conv))/2#sub$Fc_SOLO[kill.ind]*conv
 
 
 #sum the differences between obs and model:
@@ -125,7 +143,7 @@ moderr.yr[y]<-record[y]*total[y]
   
 }#closes year loop
 
-toterr<-sqrt(moderr.yr^2+rerr.yr^2); toterr[toterr>5]<-mean(toterr[toterr<5])
+toterr<-sqrt(moderr.yr^2+rerr.yr^2); toterr[toterr>5]<-mean(toterr[toterr<5], na.rm=TRUE)
 rec.dat<-data.frame(cbind(toterr,total,years))
 
 #fancy quadrature sums
@@ -147,13 +165,16 @@ points(cumsum(rec.dat$total-toterr.cum)~rec.dat$years, col='pink')
 
 out<-data.frame(cbind(rec.dat,toterr.cum))
 
-#pad with 2020+years
-if(max(years)==2019){
-slope<-lm(toterr.cum~c(1:length(years)))$coefficients[2]
-addvec<-slope*c(1,2,3)
-toterr.cum.pad<-c(toterr.cum,tail(toterr.cum,1)+addvec)
-out[(nrow(out)+1):length(toterr.cum.pad),]<-NA
-}else{toterr.cum.pad<-toterr.cum}
+# #pad with 2020+years
+# if(max(years)==2019){
+# slope<-lm(toterr.cum~c(1:length(years)))$coefficients[2]
+# addvec<-slope*c(1,2,3)
+# toterr.cum.pad<-c(toterr.cum,tail(toterr.cum,1)+addvec)
+# out[(nrow(out)+1):length(toterr.cum.pad),]<-NA
+# }else{toterr.cum.pad<-toterr.cum}
+
+#because padding no longer necessary...
+toterr.cum.pad<-toterr.cum
 
 out$toterr.pad<-toterr.cum.pad
 colnames(out)<-c("toterr", "cum_nee", "year","cumerr", "cumerr_pad")
@@ -167,7 +188,7 @@ names(allerr)<-sitenames
 
 #Make fake sorghum error until I can do this process for 2020+
 #assume conservatively that it has 2019 error every year
-allerr$sorg.merge$cumerr_pad[2:4]<-c(0.884,1.33,1.78)
+#allerr$sorg.merge$cumerr_pad[2:4]<-c(0.884,1.33,1.78)
 
 
 

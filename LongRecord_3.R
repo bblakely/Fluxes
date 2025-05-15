@@ -101,37 +101,45 @@ setwd(dir)
 
 #Yield management: convert units, match to years in data####
 
+soy.yr<-c(2010,2013,2016,2019,2022)
+#soy yield adjustments: 
+#Conversion: bu soy/ac -> .027t soy/bu soy * 2.47ac/ha * 0.50tC/t soy -> tC/ha = 0.033
+#factor for maize is 0.027. Factor for soy is 0.033 ; 0.033/0.027 -> 1.22 conversion factor
+#Factor applied directly for sorghum
+
 maize.yield.years<-as.numeric(colnames(maize.mgmt[4:18]))
-maize.yield.buac<-as.numeric(maize.mgmt[3,4:18]); maize.yield<-maize.yield.buac*0.028 #Conversion: bu corn/ac -> .025t corn/bu corn * 2.47ac/ha * 0.45tC/t corn -> tC/ha
+maize.yield.buac<-as.numeric(maize.mgmt[3,4:18]); maize.yield<-maize.yield.buac*0.027 #Conversion: bu corn/ac -> .025t corn/bu corn * 2.47ac/ha * 0.43tC/t corn -> tC/ha ; originally at 0.45tC / t maize, for resulting factor of 0.28
 maize.yield<-data.frame(cbind(maize.yield.years, maize.yield)); colnames(maize.yield)<-c("year", "yield")
+maize.yield$yield[maize.yield$year%in%soy.yr]<-maize.yield$yield[maize.yield$year%in%soy.yr]*1.22
 
 maize.c.yield.years<-as.numeric(colnames(maize.c.mgmt[4:9]))
-maize.c.yield.buac<-as.numeric(maize.c.mgmt[3,4:9]); maize.c.yield<-maize.c.yield.buac*0.028 #Conversion: bu corn/ac -> .025t corn/bu corn * 2.47ac/ha * 0.45tC/t corn -> tC/ha
+maize.c.yield.buac<-as.numeric(maize.c.mgmt[3,4:9]); maize.c.yield<-maize.c.yield.buac*0.027 #Conversion: bu corn/ac -> .025t corn/bu corn * 2.47ac/ha * 0.43 tC/t corn -> tC/ha
 maize.c.yield<-data.frame(cbind(maize.c.yield.years, maize.c.yield)); colnames(maize.c.yield)<-c("year", "yield")
+maize.c.yield$yield[maize.c.yield$year%in%soy.yr]<-maize.c.yield$yield[maize.c.yield$year%in%soy.yr]*1.22
 
 
 misc.yield.years<-as.numeric(colnames(miscanthus.mgmt[4:18]))
-misc.yield.ustac<-as.numeric(miscanthus.mgmt[4,4:18]); misc.yield<-misc.yield.ustac*1.08 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .48tC / t miscanthus -> tC/ha
+misc.yield.ustac<-as.numeric(miscanthus.mgmt[4,4:18]); misc.yield<-misc.yield.ustac*1.01 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .45tC / t miscanthus -> tC/ha; original as .48 tc/t miscanthus comes to 1.08
 misc.yield<-data.frame(cbind(misc.yield.years, misc.yield)); colnames(misc.yield)<-c("year", "yield")
 
 misc.c.yield.years<-as.numeric(colnames(miscanthus.c.mgmt[4:9]))
-misc.c.yield.ustac<-as.numeric(miscanthus.c.mgmt[4,4:9]); misc.c.yield<-misc.c.yield.ustac*1.08 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .48tC / t miscanthus -> tC/ha
+misc.c.yield.ustac<-as.numeric(miscanthus.c.mgmt[4,4:9]); misc.c.yield<-misc.c.yield.ustac*1.01 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .45tC / t miscanthus -> tC/ha; original as .48 tc/t miscanthus comes to 1.08
 misc.c.yield<-data.frame(cbind(misc.c.yield.years, misc.c.yield)); colnames(misc.c.yield)<-c("year", "yield")
 
 switch.yield.years<-as.numeric(colnames(switchgrass.mgmt[4:12]))
-switch.yield.ustac<-as.numeric(switchgrass.mgmt[4,4:12]); switch.yield<-switch.yield.ustac*1.08 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .48tC / t miscanthus -> tC/ha
+switch.yield.ustac<-as.numeric(switchgrass.mgmt[4,4:12]); switch.yield<-switch.yield.ustac*1.01 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .45tC / t miscanthus -> tC/ha; original as .48 tc/t miscanthus comes to 1.08
 switch.yield<-data.frame(cbind(switch.yield.years, switch.yield));colnames(switch.yield)<-c("year", "yield")
 
 np.yield.years<-c(2008:2016)
-np.yield.ustac<-c(0, 1.02, 2.73,1.51, 1.26, 2.49, 2.4, 2.19, 0); np.yield<-np.yield.ustac*1.08 
+np.yield.ustac<-c(0, 1.02, 2.73,1.51, 1.26, 2.49, 2.4, 2.19, 0); np.yield<-np.yield.ustac*1.01 
 np.yield<-data.frame(cbind(np.yield.years, np.yield));colnames(np.yield)<-c("year", "yield")
 
 sorg.yield.years<-as.numeric(colnames(sorghum.mgmt[4:8]))
 sorg.yield.ustac<-as.numeric(sorghum.mgmt[4,4:8]); sorg.yield.ustac[c(2, 5)]<-(-9999) #placeholder for soy years
-sorg.yield<-sorg.yield.ustac*1.08 #conversion: us tons mxg / ac -> .91 metric tons / us ton * 2.47ac/ha * .48tC / t sorghum -> tC/ha
+sorg.yield<-sorg.yield.ustac*1.01 #conversion: us tons sorghum / ac -> .91 metric tons / us ton * 2.47ac/ha * .45tC / t sorghum -> tC/ha
 #sub in correct values for soy years
 sorg.yield[c(2,5)]<- as.numeric(sorghum.mgmt[3,c(5,8)]) #bu/ac soy
-sorg.yield[c(2,5)]<-sorg.yield[c(2,5)]*0.028 #bushel conversion for soy
+sorg.yield[c(2,5)]<-sorg.yield[c(2,5)]*0.033 #bushel conversion for soy
 #combine, as with others
 sorg.yield<-data.frame(cbind(sorg.yield.years, sorg.yield));colnames(sorg.yield)<-c("year", "yield")
 
